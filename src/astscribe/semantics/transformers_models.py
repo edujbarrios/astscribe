@@ -119,17 +119,17 @@ def analyze_transformers_models(
         if _is_nonstandard_model_loader(path):
             model_class = _loader_class(path or "")
             model_id = _pretrained_id(node, symbols)
-            attributes = _keyword_values(node, symbols)
-            attributes["model_class"] = model_class
+            load_attributes = _keyword_values(node, symbols)
+            load_attributes["model_class"] = model_class
             if model_id is not None:
-                attributes["pretrained_model_name_or_path"] = model_id
+                load_attributes["pretrained_model_name_or_path"] = model_id
             ev = _evidence(parsed, node, EvidenceLevel.E2, "transformers.model_from_pretrained")
             operations.append(
                 Operation(
                     "pretrained_model_configuration",
                     "transformers",
                     subject=model_class,
-                    attributes=attributes,
+                    attributes=load_attributes,
                     evidence=ev,
                 )
             )
@@ -143,18 +143,18 @@ def analyze_transformers_models(
             constructor = symbols.resolve_constructor(node.func.id)
             if _is_nonstandard_model_loader(constructor):
                 keywords = {keyword.arg for keyword in node.keywords if keyword.arg is not None}
-                attributes: dict[str, Any] = {}
+                forward_attributes: dict[str, Any] = {}
                 if "labels" in keywords:
-                    attributes["labels_supplied"] = True
+                    forward_attributes["labels_supplied"] = True
                 if any(keyword.arg is None for keyword in node.keywords):
-                    attributes["unpacked_inputs"] = True
+                    forward_attributes["unpacked_inputs"] = True
                 ev = _evidence(parsed, node, EvidenceLevel.E3, "transformers.forward_pass")
                 operations.append(
                     Operation(
                         "forward_pass",
                         "transformers",
                         subject=node.func.id,
-                        attributes=attributes,
+                        attributes=forward_attributes,
                         evidence=ev,
                     )
                 )
@@ -179,14 +179,14 @@ def analyze_transformers_models(
         if isinstance(node.func, ast.Attribute) and node.func.attr == "generate":
             constructor = _constructor_for_subject(node.func.value, symbols)
             if _is_nonstandard_model_loader(constructor):
-                attributes = _keyword_values(node, symbols)
+                generation_attributes = _keyword_values(node, symbols)
                 ev = _evidence(parsed, node, EvidenceLevel.E3, "transformers.generate")
                 operations.append(
                     Operation(
                         "generation",
                         "transformers",
                         subject=_dotted_name(node.func.value),
-                        attributes=attributes,
+                        attributes=generation_attributes,
                         evidence=ev,
                     )
                 )
