@@ -4,7 +4,6 @@ import ast
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
-
 EventKind = Literal["read", "write", "delete"]
 _BUILTIN_NAMES = frozenset(dir(__import__("builtins"))) | {
     "__name__",
