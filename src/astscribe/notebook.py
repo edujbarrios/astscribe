@@ -7,6 +7,7 @@ from typing import Any
 
 from astscribe.api import _analyze_parsed
 from astscribe.dependency import NotebookDependencyGraph, build_dependency_graph
+from astscribe.diagnostics import NotebookDiagnostics, build_notebook_diagnostics
 from astscribe.methodology import MethodologyReport, build_methodology_report
 from astscribe.parser import (
     ImportTable,
@@ -177,6 +178,16 @@ class NotebookAnalyzer:
         """Export the dependency graph as Graphviz DOT without requiring Graphviz."""
 
         return self.dependency_graph().to_dot()
+
+    def diagnostics(self) -> NotebookDiagnostics:
+        """Build conservative notebook diagnostics from the dependency graph."""
+
+        return build_notebook_diagnostics(self.dependency_graph())
+
+    def render_diagnostics(self) -> str:
+        """Render dependency-aware notebook diagnostics as deterministic text."""
+
+        return self.diagnostics().render()
 
     @property
     def cell_count(self) -> int:
