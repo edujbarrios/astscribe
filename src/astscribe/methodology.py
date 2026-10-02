@@ -53,7 +53,7 @@ def build_methodology_report(results: tuple[AnalysisResult, ...]) -> Methodology
         "Data loading": [],
         "Execution environment": [],
         "Model architecture": [],
-        "Objective": [],
+        "Model and objective": [],
         "Optimization": [],
         "Numerical precision": [],
         "Training procedure": [],
@@ -99,7 +99,7 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         return "Reproducibility"
     if rule in {"pytorch.dataset_configuration", "pytorch.dataset_split"}:
         return "Dataset"
-    if rule in {"pytorch.preprocessing_transform"}:
+    if rule == "pytorch.preprocessing_transform":
         return "Preprocessing and augmentation"
     if rule == "pytorch.dataloader":
         return "Data loading"
@@ -112,7 +112,7 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
     }:
         return "Model architecture"
     if rule == "pytorch.loss_configuration":
-        return "Objective"
+        return "Model and objective"
     if rule in {
         "pytorch.optimizer_configuration",
         "pytorch.scheduler_configuration",
