@@ -6,6 +6,7 @@ from typing import Protocol, cast
 from astscribe.parser import ImportTable, ParsedSource, SymbolTable
 from astscribe.sir import Claim, Operation
 
+from .peft import analyze_peft
 from .pytorch import analyze_pytorch
 from .pytorch_experiment import analyze_pytorch_experiment
 from .pytorch_reproducibility import analyze_pytorch_reproducibility
@@ -32,6 +33,7 @@ class SemanticRegistry:
                 cast(SemanticAnalyzer, analyze_pytorch_reproducibility),
             ],
             "transformers": [cast(SemanticAnalyzer, analyze_transformers)],
+            "peft": [cast(SemanticAnalyzer, analyze_peft)],
         }
 
     def analyzers(self) -> dict[str, tuple[SemanticAnalyzer, ...]]:
