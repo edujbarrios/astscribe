@@ -28,7 +28,7 @@ class ExperimentPipeline:
 
 _STAGE_ORDER: tuple[tuple[str, str], ...] = (
     ("dataset", "Dataset"),
-    ("preprocessing", "Preprocessing and input preparation"),
+    ("preprocessing", "Preprocessing and augmentation"),
     ("data_loading", "Data loading"),
     ("model", "Model architecture"),
     ("objective", "Objective"),
