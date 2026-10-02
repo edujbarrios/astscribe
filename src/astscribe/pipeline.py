@@ -28,9 +28,11 @@ class ExperimentPipeline:
 
 _STAGE_ORDER: tuple[tuple[str, str], ...] = (
     ("dataset", "Dataset"),
+    ("dataset_preparation", "Dataset preparation"),
     ("preprocessing", "Preprocessing and augmentation"),
     ("data_loading", "Data loading"),
     ("model", "Model architecture"),
+    ("quantization", "Quantization"),
     ("adaptation", "Parameter-efficient fine-tuning"),
     ("objective", "Objective"),
     ("optimization", "Optimization"),
@@ -44,6 +46,11 @@ _STAGE_ORDER: tuple[tuple[str, str], ...] = (
 _OPERATION_STAGE = {
     "dataset_configuration": "dataset",
     "dataset_split": "dataset",
+    "dataset_mapping": "dataset_preparation",
+    "dataset_filter": "dataset_preparation",
+    "dataset_shuffle": "dataset_preparation",
+    "dataset_selection": "dataset_preparation",
+    "dataset_schema_transform": "dataset_preparation",
     "preprocessing_pipeline": "preprocessing",
     "preprocessing_transform": "preprocessing",
     "tokenizer_configuration": "preprocessing",
@@ -57,6 +64,8 @@ _OPERATION_STAGE = {
     "parameter_freeze": "model",
     "model_config_load": "model",
     "pretrained_model_configuration": "model",
+    "quantization_configuration": "quantization",
+    "quantized_model_load": "quantization",
     "adapter_configuration": "adaptation",
     "adapter_application": "adaptation",
     "kbit_training_preparation": "adaptation",
