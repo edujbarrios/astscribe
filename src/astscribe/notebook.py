@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
 
 from astscribe.api import _analyze_parsed
 from astscribe.methodology import MethodologyReport, build_methodology_report
@@ -14,6 +17,14 @@ from astscribe.parser import (
 from astscribe.sir import AnalysisResult
 
 
+@dataclass(frozen=True)
+class SkippedCell:
+    """A notebook cell intentionally omitted from static Python analysis."""
+
+    index: int
+    reason: str
+
+
 @dataclass
 class NotebookAnalyzer:
     """Incrementally analyze notebook cells without executing them.
@@ -25,7 +36,9 @@ class NotebookAnalyzer:
     _imports: ImportTable = field(default_factory=ImportTable)
     _symbols: SymbolTable = field(default_factory=SymbolTable)
     _cells: list[str] = field(default_factory=list)
+    _cell_indices: list[int] = field(default_factory=list)
     _results: list[AnalysisResult] = field(default_factory=list)
+    _skipped_cells: list[SkippedCell] = field(default_factory=list)
 
     @classmethod
     def from_cells(cls, cells: list[str]) -> NotebookAnalyzer:
@@ -34,9 +47,65 @@ class NotebookAnalyzer:
             analyzer.add_cell(cell)
         return analyzer
 
-    def add_cell(self, source: str) -> AnalysisResult:
-        cell_index = len(self._cells)
-        parsed = parse_source(source, cell=cell_index)
+    @classmethod
+    def from_ipynb(
+        cls,
+        path: str | Path,
+        *,
+        skip_invalid_python: bool = True,
+    ) -> NotebookAnalyzer:
+        """Load code cells from a Jupyter ``.ipynb`` file using only the standard library."""
+
+        notebook_path = Path(path)
+        with notebook_path.open("r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        return cls.from_ipynb_data(data, skip_invalid_python=skip_invalid_python)
+
+    @classmethod
+    def from_ipynb_data(
+        cls,
+        data: dict[str, Any],
+        *,
+        skip_invalid_python: bool = True,
+    ) -> NotebookAnalyzer:
+        """Build an analyzer from an already-decoded Jupyter notebook document."""
+
+        cells = data.get("cells")
+        if not isinstance(cells, list):
+            raise ValueError("Invalid notebook: expected a top-level 'cells' list.")
+
+        analyzer = cls()
+        for notebook_index, cell in enumerate(cells):
+            if not isinstance(cell, dict) or cell.get("cell_type") != "code":
+                continue
+
+            raw_source = cell.get("source", "")
+            if isinstance(raw_source, list):
+                source = "".join(str(part) for part in raw_source)
+            elif isinstance(raw_source, str):
+                source = raw_source
+            else:
+                analyzer._skipped_cells.append(
+                    SkippedCell(notebook_index, "code cell has an unsupported source representation")
+                )
+                continue
+
+            if not source.strip():
+                continue
+
+            try:
+                analyzer.add_cell(source, cell_index=notebook_index)
+            except SyntaxError as exc:
+                if not skip_invalid_python:
+                    raise
+                reason = f"not valid Python for static AST analysis: {exc.msg}"
+                analyzer._skipped_cells.append(SkippedCell(notebook_index, reason))
+
+        return analyzer
+
+    def add_cell(self, source: str, *, cell_index: int | None = None) -> AnalysisResult:
+        context_index = len(self._cells) if cell_index is None else cell_index
+        parsed = parse_source(source, cell=context_index)
 
         local_imports = build_import_table(parsed.tree)
         self._imports.aliases.update(local_imports.aliases)
@@ -45,11 +114,12 @@ class NotebookAnalyzer:
             self._imports,
             base=self._symbols,
             source=source,
-            cell=cell_index,
+            cell=context_index,
         )
 
         result = _analyze_parsed(parsed, self._imports, self._symbols)
         self._cells.append(source)
+        self._cell_indices.append(context_index)
         self._results.append(result)
         return result
 
@@ -72,6 +142,18 @@ class NotebookAnalyzer:
     @property
     def cell_count(self) -> int:
         return len(self._cells)
+
+    @property
+    def cell_indices(self) -> tuple[int, ...]:
+        """Notebook cell indices corresponding to analyzed code cells."""
+
+        return tuple(self._cell_indices)
+
+    @property
+    def skipped_cells(self) -> tuple[SkippedCell, ...]:
+        """Cells skipped because they could not be represented as static Python AST."""
+
+        return tuple(self._skipped_cells)
 
     @property
     def results(self) -> tuple[AnalysisResult, ...]:
