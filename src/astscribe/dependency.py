@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 
-EventKind = Literal["read", "write"]
+EventKind = Literal["read", "write", "delete"]
 _BUILTIN_NAMES = frozenset(dir(builtins)) | {"__name__", "__file__", "__package__"}
 
 
@@ -88,8 +88,7 @@ class NotebookDependencyGraph:
     def to_dot(self) -> str:
         lines = ["digraph ASTScribeNotebook {", "  rankdir=LR;"]
         for node in self.nodes:
-            label = f"Cell {node.cell}"
-            lines.append(f'  c{node.cell} [label="{label}"];')
+            lines.append(f'  c{node.cell} [label="Cell {node.cell}"];')
         for edge in self.edges:
             symbols = ", ".join(edge.symbols).replace('"', '\\"')
             lines.append(
@@ -135,6 +134,44 @@ class _EventCollector(ast.NodeVisitor):
         # does not create a new notebook-global symbol.
         self.visit(node)
 
+    def _delete_target(self, node: ast.AST) -> None:
+        if isinstance(node, ast.Name):
+            if not self._is_local(node.id):
+                self._emit("delete", node.id, node)
+            return
+        if isinstance(node, (ast.Tuple, ast.List)):
+            for element in node.elts:
+                self._delete_target(element)
+            return
+        self.visit(node)
+
+    def _visit_function_definition(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+    ) -> None:
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        for default in (*node.args.defaults, *node.args.kw_defaults):
+            if default is not None:
+                self.visit(default)
+        self._emit("write", node.name, node)
+
+    def _visit_for(self, node: ast.For | ast.AsyncFor) -> None:
+        self.visit(node.iter)
+        self._write_target(node.target)
+        for statement in node.body:
+            self.visit(statement)
+        for statement in node.orelse:
+            self.visit(statement)
+
+    def _visit_with(self, node: ast.With | ast.AsyncWith) -> None:
+        for item in node.items:
+            self.visit(item.context_expr)
+            if item.optional_vars is not None:
+                self._write_target(item.optional_vars)
+        for statement in node.body:
+            self.visit(statement)
+
     def visit_Name(self, node: ast.Name) -> None:
         if isinstance(node.ctx, ast.Load) and not self._is_local(node.id):
             self._emit("read", node.id, node)
@@ -163,6 +200,10 @@ class _EventCollector(ast.NodeVisitor):
         self.visit(node.value)
         self._write_target(node.target)
 
+    def visit_Delete(self, node: ast.Delete) -> None:
+        for target in node.targets:
+            self._delete_target(target)
+
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
             name = alias.asname or alias.name.split(".", 1)[0]
@@ -175,15 +216,10 @@ class _EventCollector(ast.NodeVisitor):
             self._emit("write", alias.asname or alias.name, node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        for decorator in node.decorator_list:
-            self.visit(decorator)
-        for default in (*node.args.defaults, *node.args.kw_defaults):
-            if default is not None:
-                self.visit(default)
-        self._emit("write", node.name, node)
+        self._visit_function_definition(node)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        self.visit_FunctionDef(node)
+        self._visit_function_definition(node)
 
     def visit_Lambda(self, node: ast.Lambda) -> None:
         for default in (*node.args.defaults, *node.args.kw_defaults):
@@ -200,26 +236,16 @@ class _EventCollector(ast.NodeVisitor):
         self._emit("write", node.name, node)
 
     def visit_For(self, node: ast.For) -> None:
-        self.visit(node.iter)
-        self._write_target(node.target)
-        for statement in node.body:
-            self.visit(statement)
-        for statement in node.orelse:
-            self.visit(statement)
+        self._visit_for(node)
 
     def visit_AsyncFor(self, node: ast.AsyncFor) -> None:
-        self.visit_For(node)
+        self._visit_for(node)
 
     def visit_With(self, node: ast.With) -> None:
-        for item in node.items:
-            self.visit(item.context_expr)
-            if item.optional_vars is not None:
-                self._write_target(item.optional_vars)
-        for statement in node.body:
-            self.visit(statement)
+        self._visit_with(node)
 
     def visit_AsyncWith(self, node: ast.AsyncWith) -> None:
-        self.visit_With(node)
+        self._visit_with(node)
 
     def _visit_comprehension(
         self,
@@ -281,6 +307,10 @@ def build_dependency_graph(
                         unresolved.add(event.symbol)
                 elif source_cell != cell:
                     edge_symbols.setdefault((source_cell, cell), set()).add(event.symbol)
+                continue
+
+            if event.kind == "delete":
+                producer.pop(event.symbol, None)
                 continue
 
             defines.add(event.symbol)
