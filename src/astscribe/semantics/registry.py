@@ -8,6 +8,7 @@ from astscribe.sir import Claim, Operation
 
 from .pytorch import analyze_pytorch
 from .pytorch_experiment import analyze_pytorch_experiment
+from .pytorch_reproducibility import analyze_pytorch_reproducibility
 
 
 class SemanticOutputProtocol(Protocol):
@@ -24,7 +25,11 @@ SemanticAnalyzer = Callable[
 class SemanticRegistry:
     def __init__(self) -> None:
         self._analyzers: dict[str, list[SemanticAnalyzer]] = {
-            "pytorch": [analyze_pytorch, analyze_pytorch_experiment]
+            "pytorch": [
+                analyze_pytorch,
+                analyze_pytorch_experiment,
+                analyze_pytorch_reproducibility,
+            ]
         }
 
     def analyzers(self) -> dict[str, tuple[SemanticAnalyzer, ...]]:
