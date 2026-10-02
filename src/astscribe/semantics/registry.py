@@ -1,13 +1,24 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Protocol
 
 from astscribe.parser import ImportTable, ParsedSource, SymbolTable
+from astscribe.sir import Claim, Operation
 
-from .pytorch import SemanticOutput, analyze_pytorch
+from .pytorch import analyze_pytorch
 from .pytorch_experiment import analyze_pytorch_experiment
 
-SemanticAnalyzer = Callable[[ParsedSource, ImportTable, SymbolTable], SemanticOutput]
+
+class SemanticOutputProtocol(Protocol):
+    operations: list[Operation]
+    claims: list[Claim]
+
+
+SemanticAnalyzer = Callable[
+    [ParsedSource, ImportTable, SymbolTable],
+    SemanticOutputProtocol,
+]
 
 
 class SemanticRegistry:
