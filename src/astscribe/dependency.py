@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import ast
-import builtins
+from builtins import __dict__ as _BUILTIN_DICT
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 
 EventKind = Literal["read", "write", "delete"]
-_BUILTIN_NAMES = frozenset(dir(builtins)) | {"__name__", "__file__", "__package__"}
+_BUILTIN_NAMES = frozenset(_BUILTIN_DICT) | {"__name__", "__file__", "__package__"}
 
 
 @dataclass(frozen=True)
