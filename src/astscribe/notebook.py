@@ -3,7 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from astscribe.api import _analyze_parsed
-from astscribe.parser import ImportTable, SymbolTable, build_import_table, build_symbol_table, parse_source
+from astscribe.methodology import MethodologyReport, build_methodology_report
+from astscribe.parser import (
+    ImportTable,
+    SymbolTable,
+    build_import_table,
+    build_symbol_table,
+    parse_source,
+)
 from astscribe.sir import AnalysisResult
 
 
@@ -51,6 +58,16 @@ class NotebookAnalyzer:
 
     def explain_cell(self, index: int, style: str = "scientific") -> str:
         return self.analyze_cell(index).render(style)
+
+    def methodology(self) -> MethodologyReport:
+        """Build a notebook-level, evidence-backed scientific Methods report."""
+
+        return build_methodology_report(self.results)
+
+    def render_methodology(self, *, include_evidence: bool = False) -> str:
+        """Render the notebook methodology as deterministic Markdown."""
+
+        return self.methodology().render(include_evidence=include_evidence)
 
     @property
     def cell_count(self) -> int:
