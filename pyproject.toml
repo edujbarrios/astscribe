@@ -64,6 +64,7 @@ disallow_untyped_calls = false
 
 [[tool.mypy.overrides]]
 module = [
+  "astscribe.semantics.peft",
   "astscribe.semantics.pytorch",
   "astscribe.semantics.pytorch_experiment",
   "astscribe.semantics.pytorch_reproducibility",
