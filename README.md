@@ -6,26 +6,26 @@ ASTScribe is an open-source, lightweight static semantic analysis library for Py
 
 **No LLMs. No API keys. No code execution. No telemetry.**
 
-ASTScribe is fully open source and designed to remain independent of proprietary AI services.
+ASTScribe is fully open source under the **Apache License 2.0** and is designed to remain independent of proprietary AI services.
 
 ## Why ASTScribe?
 
-Machine-learning notebooks often contain the complete implementation of an experiment while leaving its methodology distributed across many lines and cells. ASTScribe turns code structure into a conservative scientific description without executing the notebook or sending source code to an external service.
+Machine-learning notebooks often contain the complete implementation of an experiment while leaving its methodology distributed across many cells. ASTScribe turns that implementation into a conservative scientific description without executing the notebook or sending source code to an external service.
 
 The first development focus is **PyTorch**.
 
 ## Features
 
 - Python AST-based static analysis.
-- Evidence-backed claims with source line and notebook-cell traceability.
-- PyTorch-aware semantic rules.
-- Training and inference pattern recognition.
-- Scientific, educational, and concise rendering styles.
-- Static resolution of imports, aliases, literal variables, and constructor bindings.
-- Forward-only cross-cell notebook context through `NotebookAnalyzer`.
-- Static recovery of optimizer type and explicit hyperparameters from earlier cells.
+- Direct `.ipynb` loading using only the Python standard library.
+- Evidence-backed claims with source-line and notebook-cell traceability.
+- Forward-only cross-cell context through `NotebookAnalyzer`.
+- PyTorch-aware semantic rules for training and inference workflows.
+- Static recovery of optimizer type and explicit hyperparameters.
+- Detection of epochs, devices, DataLoaders, schedulers, gradient clipping, and AMP constructs.
+- Scientific, educational, and concise cell-level rendering styles.
 - Deterministic notebook-level `# Methods` reports.
-- Optional evidence appendix linking methodological claims back to code cells and lines.
+- Optional evidence appendix linking scientific claims back to source cells and lines.
 - Optional Jupyter/IPython `%%scribe` magic.
 - Zero mandatory runtime dependencies outside the Python standard library.
 - No telemetry or source-code upload.
@@ -79,46 +79,38 @@ Gradient tracking is disabled for the enclosed operations, so no autograd graph 
 A forward pass is performed by invoking the model on the supplied inputs.
 ```
 
-## Scientific Explanation
+## Analyze a Real Jupyter Notebook
+
+ASTScribe can load a `.ipynb` directly without depending on `nbformat`, Jupyter, or PyTorch:
 
 ```python
-from astscribe import explain
+from astscribe import NotebookAnalyzer
 
-code = """
-optimizer.zero_grad()
-outputs = model(inputs)
-loss = criterion(outputs, targets)
-loss.backward()
-optimizer.step()
-"""
+notebook = NotebookAnalyzer.from_ipynb("training.ipynb")
 
-print(explain(code, style="scientific"))
+print(notebook.render_methodology())
 ```
 
-ASTScribe identifies the sequence as a training step and constructs its explanation from explicit static-analysis rules rather than free-form generation.
-
-## Evidence Model
-
-Every claim is linked to evidence:
-
-- **E1** — directly observed in the AST.
-- **E2** — resolved from static symbols or notebook context.
-- **E3** — derived from known framework semantics.
-- **E4** — general methodological interpretation.
-
-The scientific renderer currently restricts itself to E1-E3 claims.
+To include an auditable evidence appendix:
 
 ```python
-from astscribe import analyze
-
-result = analyze("model.eval()")
-
-for claim in result.claims:
-    print(claim.text)
-    print(claim.evidence_level, claim.line_start, claim.rule)
+print(notebook.render_methodology(include_evidence=True))
 ```
 
-Evidence produced by notebook analysis can also identify the originating cell.
+Notebook cell indices in the evidence report refer to the original `.ipynb` document, including Markdown cells between code cells.
+
+IPython-specific syntax such as `%matplotlib` or shell commands such as `!pip install ...` is not treated as Python AST. By default, such cells are skipped and recorded explicitly:
+
+```python
+for skipped in notebook.skipped_cells:
+    print(skipped.index, skipped.reason)
+```
+
+Strict parsing is also available:
+
+```python
+NotebookAnalyzer.from_ipynb("training.ipynb", skip_invalid_python=False)
+```
 
 ## Cross-Cell Notebook Analysis
 
@@ -158,7 +150,7 @@ Context is intentionally **forward-only**. Later cells never retroactively chang
 
 ## Notebook Methods Report
 
-ASTScribe can combine evidence across the notebook into a paper-like Methods section:
+A notebook can be reduced to a deterministic paper-like Methods report:
 
 ```python
 from astscribe import NotebookAnalyzer
@@ -171,50 +163,83 @@ from torch import nn
 from torch.optim import AdamW
 
 torch.manual_seed(42)
+epochs = 10
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.01)
 """)
 
 notebook.add_cell("""
 model.train()
-optimizer.zero_grad()
-outputs = model(inputs)
-loss = criterion(outputs, targets)
-loss.backward()
-optimizer.step()
+for epoch in range(epochs):
+    optimizer.zero_grad()
+    outputs = model(inputs)
+    loss = criterion(outputs, targets)
+    loss.backward()
+    optimizer.step()
 """)
 
-print(notebook.render_methodology())
-```
-
-The generated report is grouped into deterministic scientific sections such as reproducibility, model/objective configuration, optimization, training, inference, and checkpointing.
-
-For auditability, an evidence appendix can be included:
-
-```python
 print(notebook.render_methodology(include_evidence=True))
 ```
 
-The appendix identifies the evidence level, originating notebook cell, source line, source expression, and semantic rule used for each methodological statement.
+The report groups claims into sections such as:
 
-## PyTorch Support
+- reproducibility;
+- data preparation;
+- execution environment;
+- model and objective;
+- optimization;
+- numerical precision;
+- training procedure;
+- inference procedure;
+- checkpointing.
 
-The initial rule set covers a focused subset of PyTorch, including:
+## Evidence Model
 
-- `model.train()` / `model.eval()`
-- `torch.no_grad()` / `torch.inference_mode()`
-- `loss.backward()`
-- `optimizer.zero_grad()` / `optimizer.step()`
-- Adam, AdamW, and SGD configuration
-- common loss constructors
-- `torch.manual_seed(...)`
-- checkpoint load/save operations
-- basic DataLoader configuration
-- common training and inference patterns
-- optimizer context recovered across notebook cells
-- loss-constructor context recovered across notebook cells
+Every generated claim is linked to evidence:
 
-The project intentionally prefers a small set of defensible rules over broad heuristics.
+- **E1** — directly observed in the AST.
+- **E2** — resolved from static symbols or notebook context.
+- **E3** — derived from known framework semantics.
+- **E4** — general methodological interpretation.
+
+The scientific renderer restricts itself to E1-E3 claims by default.
+
+```python
+from astscribe import analyze
+
+result = analyze("model.eval()")
+
+for claim in result.claims:
+    print(claim.text)
+    print(claim.evidence_level)
+    print(claim.evidence.cell, claim.line_start, claim.line_end)
+    print(claim.rule)
+```
+
+## Current PyTorch Coverage
+
+The current rule set intentionally focuses on common, defensible methodology signals:
+
+- `model.train()` / `model.eval()`;
+- `torch.no_grad()` / `torch.inference_mode()`;
+- model forward calls and objective evaluation;
+- `loss.backward()`;
+- `optimizer.zero_grad()` / `optimizer.step()`;
+- Adam, AdamW, and SGD configuration;
+- static learning rate, weight decay, and momentum extraction;
+- epoch loops using statically resolvable `range(...)` counts;
+- common loss constructors;
+- `torch.manual_seed(...)`;
+- DataLoader batch size, shuffling, and worker configuration;
+- `torch.device(...)`, `.to(...)`, `.cuda()`, and `.cpu()`;
+- `torch.optim.lr_scheduler.*` configuration and scheduler steps;
+- `torch.nn.utils.clip_grad_norm_` and `clip_grad_value_`;
+- `torch.autocast`, `torch.amp.autocast`, and CUDA autocast;
+- `GradScaler` configuration, scaling, stepping, and updating;
+- checkpoint load/save operations;
+- cross-cell optimizer and loss-constructor context.
+
+The project deliberately prefers a small set of defensible rules over broad heuristics that could produce unsupported scientific claims.
 
 ## Jupyter Usage
 
@@ -233,7 +258,7 @@ with torch.no_grad():
     outputs = model(inputs)
 ```
 
-Choose another renderer by passing the style after the magic:
+Choose another renderer:
 
 ```python
 %%scribe educational
@@ -243,37 +268,40 @@ model.eval()
 ## Architecture
 
 ```text
-Notebook Cells
-    │
-    ▼
-Python AST
-    │
-    ▼
+.ipynb / Notebook Cells
+        │
+        ▼
+    Python AST
+        │
+        ▼
 Import, Symbol & Cross-Cell Resolution
-    │
-    ▼
+        │
+        ▼
 Framework Semantic Rules
-    │
-    ▼
+        │
+        ▼
 Pattern Recognition
-    │
-    ▼
-SIR
+        │
+        ▼
+       SIR
 Scientific Interpretation Representation
-    │
-    ▼
+        │
+        ▼
 Evidence-Backed Claims
-    │
-    ├────────► Cell-level renderers
-    │
-    └────────► Notebook Methods report
+        │
+        ├────────► Cell-level renderers
+        │
+        └────────► Notebook Methods report
+                         │
+                         ▼
+                  Evidence appendix
 ```
 
-This architecture is intentionally deterministic and inspectable.
+The architecture is intentionally deterministic and inspectable.
 
 ## Open Source
 
-ASTScribe is fully open source from its first commit. The analysis engine, semantic rules, renderers, and notebook integration are all available in this repository under the **Apache License 2.0**.
+ASTScribe is fully open source. The analysis engine, semantic rules, renderers, and notebook integration are available in this repository under the **Apache License 2.0**.
 
 The project does not require proprietary APIs, external AI services, telemetry systems, or closed-source runtime components.
 
@@ -292,37 +320,40 @@ mypy src/astscribe
 
 ### v0.1
 
-- Python AST parser
-- PyTorch semantic rules
-- training/inference pattern detection
-- scientific renderer
-- evidence tracking
-- forward-only cross-cell notebook context
-- static optimizer and loss binding resolution
-- deterministic notebook-level Methods reports
-- evidence appendix with cell/line provenance
-- `%%scribe` IPython magic
+- Python AST parser;
+- PyTorch semantic rules;
+- training/inference pattern detection;
+- scientific renderer;
+- evidence tracking;
+- direct `.ipynb` loading;
+- forward-only cross-cell notebook context;
+- optimizer/loss/scheduler configuration analysis;
+- epochs, devices, gradient clipping, and AMP analysis;
+- deterministic notebook-level Methods reports;
+- evidence appendix with cell/line provenance;
+- `%%scribe` IPython magic.
 
 ### v0.2
 
-- richer DataLoader and preprocessing analysis
-- reproducibility inspection
-- richer optimizer/loss support
-- notebook-level methodology graph
+- richer preprocessing and augmentation analysis;
+- deeper reproducibility inspection;
+- notebook-level methodology graph;
+- more optimizer, loss, and scheduler families;
+- richer static model-architecture descriptions.
 
 ### v0.3
 
-- Hugging Face Transformers
-- richer Methods-section generation
-- notebook-level experiment summaries
+- Hugging Face Transformers;
+- richer Methods-section generation;
+- notebook-level experiment summaries.
 
 ### Future
 
-- scikit-learn
-- TensorFlow/Keras
-- notebook dependency graphs
-- richer Jupyter visualization
-- community semantic-rule packs
+- scikit-learn;
+- TensorFlow/Keras;
+- notebook dependency graphs;
+- richer Jupyter visualization;
+- community semantic-rule packs.
 
 ## Citation
 
