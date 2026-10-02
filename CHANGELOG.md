@@ -20,12 +20,13 @@ All notable changes to ASTScribe will be documented in this file.
 - Transformers `save_pretrained(...)` checkpoint/export semantics.
 - Dedicated notebook Methods section for tokenization and input preparation.
 - Transformers-aware structured experiment-pipeline reconstruction.
-- Tests for alias resolution, cross-cell Transformers context, generation, Trainer workflows, Methods reporting, and pipeline reconstruction.
+- Tests for import alias resolution, cross-cell Transformers context, generation, Trainer workflows, Methods reporting, and pipeline reconstruction.
+- A documented Transformers evidence contract and explicit non-goals in `docs/transformers_semantics.md`.
 
 ### Changed
 
 - ASTScribe now supports PyTorch and Hugging Face Transformers as first-class semantic frameworks.
-- The experiment pipeline uses the broader `Preprocessing and input preparation` stage title so vision transforms and tokenization can share a structured stage without conflating their scientific descriptions.
+- Transformers tokenization and processor operations share the existing structured preprocessing pipeline stage while receiving a dedicated Methods section, preserving the public pipeline title used by v0.2.
 
 ## [0.2.0] - Unreleased
 
