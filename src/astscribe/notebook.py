@@ -8,6 +8,12 @@ from typing import Any
 from astscribe.api import _analyze_parsed
 from astscribe.dependency import NotebookDependencyGraph, build_dependency_graph
 from astscribe.diagnostics import NotebookDiagnostics, build_notebook_diagnostics
+from astscribe.impact import (
+    CellImpactSummary,
+    NotebookImpactReport,
+    build_impact_report,
+    rank_cells_by_impact,
+)
 from astscribe.methodology import MethodologyReport, build_methodology_report
 from astscribe.parser import (
     ImportTable,
@@ -188,6 +194,21 @@ class NotebookAnalyzer:
         """Render dependency-aware notebook diagnostics as deterministic text."""
 
         return self.diagnostics().render()
+
+    def impact(self, cell: int) -> NotebookImpactReport:
+        """Compute direct and transitive static impact for one notebook cell."""
+
+        return build_impact_report(self.dependency_graph(), cell)
+
+    def render_impact(self, cell: int) -> str:
+        """Render the static blast radius and propagation paths for one cell."""
+
+        return self.impact(cell).render()
+
+    def impact_ranking(self) -> tuple[CellImpactSummary, ...]:
+        """Rank analyzed cells by downstream static blast radius."""
+
+        return rank_cells_by_impact(self.dependency_graph())
 
     @property
     def cell_count(self) -> int:
