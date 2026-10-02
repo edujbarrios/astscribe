@@ -134,17 +134,17 @@ def analyze_transformers_quantization(
 
         path = _call_path(node, imports)
         if path == "transformers.BitsAndBytesConfig":
-            attributes = _keyword_values(node, symbols, imports)
-            bits = _bitsandbytes_bits(attributes)
+            config_attributes = _keyword_values(node, symbols, imports)
+            bits = _bitsandbytes_bits(config_attributes)
             if bits is not None:
-                attributes["bits"] = bits
+                config_attributes["bits"] = bits
             ev = _evidence(parsed, node, EvidenceLevel.E2, "transformers.bitsandbytes_config")
             operations.append(
                 Operation(
                     "quantization_configuration",
                     "transformers",
                     subject="bitsandbytes",
-                    attributes=attributes,
+                    attributes=config_attributes,
                     evidence=ev,
                 )
             )
@@ -159,8 +159,8 @@ def analyze_transformers_quantization(
                 "bnb_4bit_use_double_quant",
                 "llm_int8_threshold",
             ):
-                if key in attributes:
-                    details.append(f"{key}={attributes[key]!r}")
+                if key in config_attributes:
+                    details.append(f"{key}={config_attributes[key]!r}")
             if details:
                 text = f"{text[:-1]} with {', '.join(details)}."
             claims.append(Claim(text, ev))
@@ -169,7 +169,7 @@ def analyze_transformers_quantization(
         if not _is_transformers_loader(path) or _is_non_model_loader(path):
             continue
 
-        attributes: dict[str, Any] = {}
+        load_attributes: dict[str, Any] = {}
         config_context: tuple[str, dict[str, Any]] | None = None
         for keyword in node.keywords:
             if keyword.arg == "quantization_config":
@@ -178,18 +178,18 @@ def analyze_transformers_quantization(
 
         if config_context is not None:
             constructor, config_attributes = config_context
-            attributes.update(config_attributes)
-            attributes["quantization_config"] = constructor.rsplit(".", 1)[-1]
+            load_attributes.update(config_attributes)
+            load_attributes["quantization_config"] = constructor.rsplit(".", 1)[-1]
         else:
             direct = _keyword_values(node, symbols, imports)
             for key in ("load_in_4bit", "load_in_8bit"):
                 if key in direct:
-                    attributes[key] = direct[key]
+                    load_attributes[key] = direct[key]
 
-        bits = _bitsandbytes_bits(attributes)
+        bits = _bitsandbytes_bits(load_attributes)
         if bits is None:
             continue
-        attributes["bits"] = bits
+        load_attributes["bits"] = bits
 
         model_class = _loader_class(path or "")
         ev = _evidence(parsed, node, EvidenceLevel.E3, "transformers.quantized_model_load")
@@ -198,7 +198,7 @@ def analyze_transformers_quantization(
                 "quantized_model_load",
                 "transformers",
                 subject=model_class,
-                attributes=attributes,
+                attributes=load_attributes,
                 evidence=ev,
             )
         )
