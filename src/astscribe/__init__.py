@@ -1,6 +1,6 @@
 from .api import analyze, explain
 from .methodology import MethodologyReport, MethodologySection
-from .notebook import NotebookAnalyzer
+from .notebook import NotebookAnalyzer, SkippedCell
 from .sir import AnalysisResult
 
 __version__ = "0.1.0"
@@ -10,6 +10,7 @@ __all__ = [
     "MethodologyReport",
     "MethodologySection",
     "NotebookAnalyzer",
+    "SkippedCell",
     "analyze",
     "explain",
 ]
