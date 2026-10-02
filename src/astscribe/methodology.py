@@ -49,8 +49,10 @@ def build_methodology_report(results: tuple[AnalysisResult, ...]) -> Methodology
     buckets: dict[str, list[Claim]] = {
         "Reproducibility": [],
         "Data preparation": [],
+        "Execution environment": [],
         "Model and objective": [],
         "Optimization": [],
+        "Numerical precision": [],
         "Training procedure": [],
         "Inference procedure": [],
         "Checkpointing": [],
@@ -93,10 +95,25 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         return "Reproducibility"
     if rule == "pytorch.dataloader":
         return "Data preparation"
-    if rule in {"pytorch.optimizer_configuration"}:
-        return "Optimization"
-    if rule in {"pytorch.loss_configuration"}:
+    if rule in {"pytorch.device_configuration", "pytorch.device_transfer"}:
+        return "Execution environment"
+    if rule == "pytorch.loss_configuration":
         return "Model and objective"
+    if rule in {
+        "pytorch.optimizer_configuration",
+        "pytorch.scheduler_configuration",
+        "pytorch.scheduler_step",
+        "pytorch.gradient_clipping",
+    }:
+        return "Optimization"
+    if rule in {
+        "pytorch.autocast",
+        "pytorch.grad_scaler",
+        "pytorch.grad_scaler_scale",
+        "pytorch.grad_scaler_step",
+        "pytorch.grad_scaler_update",
+    }:
+        return "Numerical precision"
     if rule in {"pytorch.checkpoint_save", "pytorch.checkpoint_load"}:
         return "Checkpointing"
     if rule in {"pytorch.model_eval", "pytorch.no_grad", "pytorch.inference_mode"}:
@@ -109,6 +126,7 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         "pytorch.backward",
         "pytorch.optimizer_step",
         "pytorch.loss_computation",
+        "pytorch.epoch_loop",
     }:
         return "Training procedure"
     if rule == "pytorch.forward_pass" and result.training_step is not None:
