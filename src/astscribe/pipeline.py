@@ -31,6 +31,7 @@ _STAGE_ORDER: tuple[tuple[str, str], ...] = (
     ("preprocessing", "Preprocessing and augmentation"),
     ("data_loading", "Data loading"),
     ("model", "Model architecture"),
+    ("adaptation", "Parameter-efficient fine-tuning"),
     ("objective", "Objective"),
     ("optimization", "Optimization"),
     ("precision", "Numerical precision"),
@@ -56,6 +57,14 @@ _OPERATION_STAGE = {
     "parameter_freeze": "model",
     "model_config_load": "model",
     "pretrained_model_configuration": "model",
+    "adapter_configuration": "adaptation",
+    "adapter_application": "adaptation",
+    "kbit_training_preparation": "adaptation",
+    "adapter_checkpoint_load": "adaptation",
+    "adapter_state_export": "adaptation",
+    "adapter_merge": "adaptation",
+    "adapter_activation": "adaptation",
+    "adapter_addition": "adaptation",
     "loss_configuration": "objective",
     "optimizer_configuration": "optimization",
     "scheduler_configuration": "optimization",
@@ -90,6 +99,7 @@ _OPERATION_STAGE = {
     "checkpoint_save": "checkpointing",
     "checkpoint_load": "checkpointing",
     "state_dict_load": "checkpointing",
+    "adapter_checkpoint_save": "checkpointing",
 }
 
 
