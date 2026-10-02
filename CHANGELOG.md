@@ -2,6 +2,27 @@
 
 All notable changes to ASTScribe will be documented in this file.
 
+## [0.6.0] - Unreleased
+
+### Added
+
+- Framework-agnostic notebook cell dependency graph based on ordered Python symbol reads, writes, and deletions.
+- Static resolution of cross-cell symbol reads to the latest previously observed producer.
+- Aggregated producer-cell to consumer-cell edges with the symbols responsible for each dependency.
+- Per-cell unresolved-read reporting for non-builtin symbols with no supported prior producer.
+- Cross-cell symbol-redefinition tracking for names repeatedly rebound during notebook experimentation.
+- `NotebookAnalyzer.dependency_graph()`, `render_dependency_graph()`, and `dependency_dot()`.
+- `NotebookDependencyGraph.parents(...)`, `children(...)`, structured `to_dict()`, deterministic text rendering, and Graphviz DOT source export.
+- Original `.ipynb` cell-index preservation in graph nodes and edges.
+- Conservative scope handling for imports, assignments, augmented assignments, loops, context-manager bindings, comprehensions, function defaults, classes, and deletion.
+- Dedicated dependency-graph semantics and limitations in `docs/cell_dependency_graph.md`.
+- Tests covering read-before-write reassignment, producer replacement, comprehension scope, function-definition behavior, deletion, unresolved reads, original notebook indices, and DOT export.
+
+### Changed
+
+- ASTScribe now includes a framework-independent notebook structural/dataflow layer in addition to framework semantic analysis, experiment reconstruction, and composite-technique detection.
+- Dependency analysis is flow-sensitive to supported syntactic event order while remaining intentionally non-branch-sensitive and independent of historical Jupyter kernel execution state.
+
 ## [0.5.0] - Unreleased
 
 ### Added
