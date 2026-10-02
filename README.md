@@ -253,7 +253,7 @@ Example:
 ```text
 Dataset
     ↓
-Preprocessing and input preparation
+Preprocessing and augmentation
     ↓
 Data loading
     ↓
@@ -272,6 +272,8 @@ Metrics
 Checkpointing
 ```
 
+For backwards compatibility, Transformers tokenization and processor operations reuse the structured `preprocessing` stage key and its existing display title. The Methods report remains more precise and gives Transformers input handling its own `Tokenization and input preparation` section.
+
 The same information is available as structured data:
 
 ```python
@@ -285,7 +287,7 @@ payload = pipeline.to_dict()
 
 Only stages supported by detected evidence are included. A missing stage means that ASTScribe did not find sufficient supported evidence; it does not prove that the experiment omitted that stage.
 
-See [`docs/experiment_pipeline.md`](docs/experiment_pipeline.md) for the current semantics and design constraints.
+See [`docs/experiment_pipeline.md`](docs/experiment_pipeline.md) for the current pipeline semantics and [`docs/transformers_semantics.md`](docs/transformers_semantics.md) for the Transformers evidence contract and explicit non-goals.
 
 ## Evidence Model
 
@@ -345,9 +347,9 @@ The current rule set intentionally focuses on common, defensible methodology sig
 The Transformers analyzer remains deliberately small and explicit. It currently recognizes:
 
 - `AutoTokenizer*`, processor, image-processor, feature-extractor, and config `from_pretrained(...)` calls;
-- `AutoModel*` and other Transformers model classes loaded through `from_pretrained(...)`;
+- `AutoModel*` and model classes whose class name contains `Model`, loaded through `from_pretrained(...)`;
 - cross-cell tokenizer and processor calls;
-- Transformers model forward calls;
+- Transformers model forward calls for statically known supported model constructors;
 - explicit `labels=` passed to a model call as supervision evidence;
 - `TrainingArguments` and `Seq2SeqTrainingArguments` with statically resolvable hyperparameters;
 - `Trainer` and `Seq2SeqTrainer` construction;
@@ -357,7 +359,7 @@ The Transformers analyzer remains deliberately small and explicit. It currently 
 - `transformers.pipeline(...)` task configuration;
 - `model.generate(...)` with explicit token limits, beam-search, and sampling controls;
 - tokenizer `decode(...)` and `batch_decode(...)`;
-- `save_pretrained(...)`.
+- `save_pretrained(...)` for statically known supported Transformers components.
 
 ASTScribe does **not** infer model quality, dataset suitability, task correctness, hidden defaults, remote model behavior, or scientific conclusions that are not explicit in the notebook source. The project deliberately prefers a small set of defensible rules over broad heuristics that could produce unsupported scientific claims.
 
