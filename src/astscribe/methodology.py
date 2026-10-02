@@ -54,6 +54,7 @@ def build_methodology_report(results: tuple[AnalysisResult, ...]) -> Methodology
         "Data loading": [],
         "Execution environment": [],
         "Model architecture": [],
+        "Parameter-efficient fine-tuning": [],
         "Model and objective": [],
         "Optimization": [],
         "Numerical precision": [],
@@ -128,6 +129,18 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         "transformers.model_from_pretrained",
     }:
         return "Model architecture"
+    if rule in {
+        "peft.adapter_configuration",
+        "peft.get_peft_model",
+        "peft.prepare_model_for_kbit_training",
+        "peft.model_from_pretrained",
+        "peft.merge_and_unload",
+        "peft.load_adapter",
+        "peft.set_adapter",
+        "peft.add_adapter",
+        "peft.get_peft_model_state_dict",
+    }:
+        return "Parameter-efficient fine-tuning"
     if rule == "pytorch.loss_configuration":
         return "Model and objective"
     if rule in {
@@ -156,6 +169,7 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         "pytorch.checkpoint_load",
         "pytorch.load_state_dict",
         "transformers.save_pretrained",
+        "peft.save_pretrained",
     }:
         return "Checkpointing"
     if rule in {
