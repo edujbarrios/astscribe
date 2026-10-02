@@ -2,6 +2,31 @@
 
 All notable changes to ASTScribe will be documented in this file.
 
+## [0.3.0] - Unreleased
+
+### Added
+
+- First Hugging Face Transformers semantic analyzer with no runtime Transformers dependency.
+- `AutoTokenizer*`, processor, image-processor, feature-extractor, config, and `AutoModel*` `from_pretrained(...)` analysis.
+- Cross-cell tokenizer and processor invocation semantics.
+- Transformers model forward-pass analysis with explicit `labels=` supervision evidence.
+- `TrainingArguments` and `Seq2SeqTrainingArguments` static hyperparameter recovery.
+- `Trainer` and `Seq2SeqTrainer` configuration, training, evaluation, and prediction semantics.
+- Common `DataCollator*` configuration analysis.
+- `transformers.set_seed(...)` reproducibility analysis.
+- `transformers.pipeline(...)` inference-pipeline analysis.
+- `generate(...)` analysis for statically resolvable generation parameters including token limits, beam search, and sampling controls.
+- Tokenizer `decode(...)` and `batch_decode(...)` output-decoding analysis.
+- Transformers `save_pretrained(...)` checkpoint/export semantics.
+- Dedicated notebook Methods section for tokenization and input preparation.
+- Transformers-aware structured experiment-pipeline reconstruction.
+- Tests for alias resolution, cross-cell Transformers context, generation, Trainer workflows, Methods reporting, and pipeline reconstruction.
+
+### Changed
+
+- ASTScribe now supports PyTorch and Hugging Face Transformers as first-class semantic frameworks.
+- The experiment pipeline uses the broader `Preprocessing and input preparation` stage title so vision transforms and tokenization can share a structured stage without conflating their scientific descriptions.
+
 ## [0.2.0] - Unreleased
 
 ### Added
