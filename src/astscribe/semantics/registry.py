@@ -9,6 +9,7 @@ from astscribe.sir import Claim, Operation
 from .pytorch import analyze_pytorch
 from .pytorch_experiment import analyze_pytorch_experiment
 from .pytorch_reproducibility import analyze_pytorch_reproducibility
+from .transformers import analyze_transformers
 
 
 class SemanticOutputProtocol(Protocol):
@@ -29,7 +30,8 @@ class SemanticRegistry:
                 cast(SemanticAnalyzer, analyze_pytorch),
                 cast(SemanticAnalyzer, analyze_pytorch_experiment),
                 cast(SemanticAnalyzer, analyze_pytorch_reproducibility),
-            ]
+            ],
+            "transformers": [cast(SemanticAnalyzer, analyze_transformers)],
         }
 
     def analyzers(self) -> dict[str, tuple[SemanticAnalyzer, ...]]:
