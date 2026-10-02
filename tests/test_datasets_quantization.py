@@ -31,6 +31,17 @@ def test_dataset_lineage_supports_map_then_train_test_split_across_cells() -> No
     assert split_operation.attributes["seed"] == 42
 
 
+def test_dataset_lineage_survives_fluent_self_reassignment() -> None:
+    notebook = NotebookAnalyzer()
+    notebook.add_cell("from datasets import load_dataset\ndataset = load_dataset('imdb', split='train')")
+    mapped = notebook.add_cell("dataset = dataset.map(tokenize, batched=True)")
+    shuffled = notebook.add_cell("dataset = dataset.shuffle(seed=7)")
+
+    assert any(item.kind == "dataset_mapping" for item in mapped.operations)
+    shuffle = next(item for item in shuffled.operations if item.kind == "dataset_shuffle")
+    assert shuffle.attributes["seed"] == 7
+
+
 def test_bitsandbytes_config_and_quantized_model_load_are_linked_across_cells() -> None:
     notebook = NotebookAnalyzer()
     config = notebook.add_cell(
@@ -56,6 +67,21 @@ def test_bitsandbytes_config_and_quantized_model_load_are_linked_across_cells() 
     load_operation = next(item for item in model.operations if item.kind == "quantized_model_load")
     assert load_operation.attributes["bits"] == 4
     assert load_operation.attributes["quantization_config"] == "BitsAndBytesConfig"
+
+
+def test_non_model_named_transformers_class_is_treated_as_model() -> None:
+    notebook = NotebookAnalyzer()
+    loaded = notebook.add_cell(
+        "from transformers import LlavaForConditionalGeneration\n"
+        "model = LlavaForConditionalGeneration.from_pretrained('example/vlm')\n"
+    )
+    generated = notebook.add_cell("tokens = model.generate(**inputs, max_new_tokens=32)")
+
+    model_operation = next(
+        item for item in loaded.operations if item.kind == "pretrained_model_configuration"
+    )
+    assert model_operation.subject == "LlavaForConditionalGeneration"
+    assert any(item.kind == "generation" for item in generated.operations)
 
 
 def test_qlora_requires_4bit_lora_and_training_evidence() -> None:
