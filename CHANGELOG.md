@@ -2,6 +2,31 @@
 
 All notable changes to ASTScribe will be documented in this file.
 
+## [0.5.0] - Unreleased
+
+### Added
+
+- First Hugging Face Datasets semantic analyzer with no runtime `datasets` dependency.
+- Static `load_dataset(...)` and `load_from_disk(...)` analysis with dataset identifier, split, streaming, and other statically resolvable options.
+- Dataset `map`, `filter`, `train_test_split`, `shuffle`, `select`, and common schema-transformation semantics.
+- Dataset lineage resolution across notebook cells.
+- Dedicated `Dataset preparation` Methods and experiment-pipeline stage.
+- First bitsandbytes-oriented Transformers quantization analyzer with no runtime `bitsandbytes` dependency.
+- `BitsAndBytesConfig(...)` analysis for explicit 4-bit/8-bit settings, NF4/FP4-related configuration, compute dtype expressions, double quantization, and int8 threshold when statically available.
+- Cross-cell linking of named `BitsAndBytesConfig` instances to model `from_pretrained(..., quantization_config=...)` calls.
+- Dedicated `Quantization` Methods and experiment-pipeline stage.
+- `NotebookAnalyzer.techniques()` and `NotebookAnalyzer.render_techniques()` for techniques requiring evidence across multiple cells.
+- Conservative composite QLoRA detection requiring explicit 4-bit model loading, LoRA application, and an invoked training procedure.
+- Broader Transformers model-class coverage for classes such as VLM/generative implementations whose names do not literally contain `Model`.
+- Dataset/quantization/QLoRA evidence contract in `docs/datasets_quantization.md`.
+- Tests for dataset lineage, fluent reassignment, quantized model loading, QLoRA positive/negative cases, VLM model classes, Methods output, and pipeline reconstruction.
+
+### Changed
+
+- Fluent self-reassignment such as `dataset = dataset.map(...)` now preserves constructor lineage, improving cross-cell semantic context without framework-specific parser logic.
+- ASTScribe now supports PyTorch, Hugging Face Transformers, Hugging Face Datasets, and PEFT as first-class semantic frameworks.
+- The experiment pipeline can distinguish dataset preparation, model architecture, quantization, and parameter-efficient adaptation as separate evidence-backed stages.
+
 ## [0.4.0] - Unreleased
 
 ### Added

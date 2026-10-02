@@ -16,6 +16,7 @@ from astscribe.parser import (
 )
 from astscribe.pipeline import ExperimentPipeline, build_experiment_pipeline
 from astscribe.sir import AnalysisResult
+from astscribe.techniques import TechniqueFinding, detect_techniques, render_techniques
 
 
 @dataclass(frozen=True)
@@ -149,6 +150,16 @@ class NotebookAnalyzer:
         """Render the reconstructed experiment pipeline as a compact text diagram."""
 
         return self.pipeline().render()
+
+    def techniques(self) -> tuple[TechniqueFinding, ...]:
+        """Detect composite notebook techniques that require evidence across cells."""
+
+        return detect_techniques(self.results)
+
+    def render_techniques(self) -> str:
+        """Render composite technique findings with their supporting source evidence."""
+
+        return render_techniques(self.techniques())
 
     @property
     def cell_count(self) -> int:

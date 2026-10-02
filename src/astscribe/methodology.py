@@ -49,11 +49,13 @@ def build_methodology_report(results: tuple[AnalysisResult, ...]) -> Methodology
     buckets: dict[str, list[Claim]] = {
         "Reproducibility": [],
         "Dataset": [],
+        "Dataset preparation": [],
         "Preprocessing and augmentation": [],
         "Tokenization and input preparation": [],
         "Data loading": [],
         "Execution environment": [],
         "Model architecture": [],
+        "Quantization": [],
         "Parameter-efficient fine-tuning": [],
         "Model and objective": [],
         "Optimization": [],
@@ -106,8 +108,25 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         "transformers.set_seed",
     }:
         return "Reproducibility"
-    if rule in {"pytorch.dataset_configuration", "pytorch.dataset_split"}:
+    if rule in {
+        "pytorch.dataset_configuration",
+        "pytorch.dataset_split",
+        "datasets.load_dataset",
+        "datasets.load_from_disk",
+        "datasets.train_test_split",
+    }:
         return "Dataset"
+    if rule in {
+        "datasets.map",
+        "datasets.filter",
+        "datasets.shuffle",
+        "datasets.select",
+        "datasets.remove_columns",
+        "datasets.rename_column",
+        "datasets.rename_columns",
+        "datasets.select_columns",
+    }:
+        return "Dataset preparation"
     if rule == "pytorch.preprocessing_transform":
         return "Preprocessing and augmentation"
     if rule in {
@@ -129,6 +148,11 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         "transformers.model_from_pretrained",
     }:
         return "Model architecture"
+    if rule in {
+        "transformers.bitsandbytes_config",
+        "transformers.quantized_model_load",
+    }:
+        return "Quantization"
     if rule in {
         "peft.adapter_configuration",
         "peft.get_peft_model",

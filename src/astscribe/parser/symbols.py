@@ -82,6 +82,14 @@ def _keyword_values(call: ast.Call, table: SymbolTable) -> dict[str, Any]:
     return values
 
 
+def _is_fluent_self_assignment(name: str, value: ast.Call) -> bool:
+    return (
+        isinstance(value.func, ast.Attribute)
+        and isinstance(value.func.value, ast.Name)
+        and value.func.value.id == name
+    )
+
+
 def build_symbol_table(
     tree: ast.Module,
     imports: ImportTable,
@@ -108,6 +116,7 @@ def build_symbol_table(
             continue
 
         name = target.id
+        previous_context = table.constructor_context(name)
         constant = table.resolve_constant(value)
         if constant is not None:
             table.constants[name] = constant
@@ -119,6 +128,14 @@ def build_symbol_table(
         table.constants.pop(name, None)
 
         if isinstance(value, ast.Call):
+            if _is_fluent_self_assignment(name, value) and previous_context is not None:
+                constructor, arguments, origin = previous_context
+                table.constructors[name] = constructor
+                table.constructor_arguments[name] = arguments
+                if origin is not None:
+                    table.constructor_origins[name] = origin
+                continue
+
             called = _dotted_name(value.func)
             if called:
                 table.constructors[name] = imports.resolve_dotted(called)
