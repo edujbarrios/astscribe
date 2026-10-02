@@ -24,6 +24,8 @@ The first development focus is **PyTorch**.
 - Static resolution of imports, aliases, literal variables, and constructor bindings.
 - Forward-only cross-cell notebook context through `NotebookAnalyzer`.
 - Static recovery of optimizer type and explicit hyperparameters from earlier cells.
+- Deterministic notebook-level `# Methods` reports.
+- Optional evidence appendix linking methodological claims back to code cells and lines.
 - Optional Jupyter/IPython `%%scribe` magic.
 - Zero mandatory runtime dependencies outside the Python standard library.
 - No telemetry or source-code upload.
@@ -154,6 +156,47 @@ The final cell can recover that `optimizer` refers to an `AdamW` instance config
 
 Context is intentionally **forward-only**. Later cells never retroactively change the interpretation of earlier cells.
 
+## Notebook Methods Report
+
+ASTScribe can combine evidence across the notebook into a paper-like Methods section:
+
+```python
+from astscribe import NotebookAnalyzer
+
+notebook = NotebookAnalyzer()
+
+notebook.add_cell("""
+import torch
+from torch import nn
+from torch.optim import AdamW
+
+torch.manual_seed(42)
+criterion = nn.CrossEntropyLoss()
+optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.01)
+""")
+
+notebook.add_cell("""
+model.train()
+optimizer.zero_grad()
+outputs = model(inputs)
+loss = criterion(outputs, targets)
+loss.backward()
+optimizer.step()
+""")
+
+print(notebook.render_methodology())
+```
+
+The generated report is grouped into deterministic scientific sections such as reproducibility, model/objective configuration, optimization, training, inference, and checkpointing.
+
+For auditability, an evidence appendix can be included:
+
+```python
+print(notebook.render_methodology(include_evidence=True))
+```
+
+The appendix identifies the evidence level, originating notebook cell, source line, source expression, and semantic rule used for each methodological statement.
+
 ## PyTorch Support
 
 The initial rule set covers a focused subset of PyTorch, including:
@@ -221,8 +264,9 @@ Scientific Interpretation Representation
     ▼
 Evidence-Backed Claims
     │
-    ▼
-Scientific Renderer
+    ├────────► Cell-level renderers
+    │
+    └────────► Notebook Methods report
 ```
 
 This architecture is intentionally deterministic and inspectable.
@@ -255,6 +299,8 @@ mypy src/astscribe
 - evidence tracking
 - forward-only cross-cell notebook context
 - static optimizer and loss binding resolution
+- deterministic notebook-level Methods reports
+- evidence appendix with cell/line provenance
 - `%%scribe` IPython magic
 
 ### v0.2
@@ -267,8 +313,8 @@ mypy src/astscribe
 ### v0.3
 
 - Hugging Face Transformers
-- notebook-level methodology extraction
-- Methods-section generation
+- richer Methods-section generation
+- notebook-level experiment summaries
 
 ### Future
 
