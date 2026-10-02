@@ -1,17 +1,24 @@
 from __future__ import annotations
 
-from astscribe.parser import build_import_table, build_symbol_table, parse_source
+from astscribe.parser import (
+    ImportTable,
+    ParsedSource,
+    SymbolTable,
+    build_import_table,
+    build_symbol_table,
+    parse_source,
+)
 from astscribe.patterns import detect_inference, detect_training_step
 from astscribe.semantics import DEFAULT_REGISTRY
 from astscribe.sir import AnalysisResult
 
 
-def analyze(source: str) -> AnalysisResult:
-    parsed = parse_source(source)
-    imports = build_import_table(parsed.tree)
-    symbols = build_symbol_table(parsed.tree, imports)
-
-    result = AnalysisResult(source=source)
+def _analyze_parsed(
+    parsed: ParsedSource,
+    imports: ImportTable,
+    symbols: SymbolTable,
+) -> AnalysisResult:
+    result = AnalysisResult(source=parsed.source)
     for framework, analyzer in DEFAULT_REGISTRY.analyzers().items():
         semantic = analyzer(parsed, imports, symbols)
         if semantic.operations or semantic.claims:
@@ -22,6 +29,13 @@ def analyze(source: str) -> AnalysisResult:
     result.training_step = detect_training_step(result.operations)
     result.inference = detect_inference(result.operations)
     return result
+
+
+def analyze(source: str) -> AnalysisResult:
+    parsed = parse_source(source)
+    imports = build_import_table(parsed.tree)
+    symbols = build_symbol_table(parsed.tree, imports, source=source)
+    return _analyze_parsed(parsed, imports, symbols)
 
 
 def explain(
