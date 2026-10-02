@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -35,14 +36,12 @@ def _first_operation(
     operations: tuple[Operation, ...],
     kind: str,
     *,
-    predicate: object | None = None,
+    predicate: Callable[[Operation], bool] | None = None,
 ) -> Operation | None:
     for operation in operations:
         if operation.kind != kind:
             continue
-        if predicate is None:
-            return operation
-        if callable(predicate) and predicate(operation):
+        if predicate is None or predicate(operation):
             return operation
     return None
 
