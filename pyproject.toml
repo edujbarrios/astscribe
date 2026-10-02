@@ -67,5 +67,6 @@ module = [
   "astscribe.semantics.pytorch",
   "astscribe.semantics.pytorch_experiment",
   "astscribe.semantics.pytorch_reproducibility",
+  "astscribe.semantics.transformers",
 ]
 disable_error_code = ["no-redef"]
