@@ -120,7 +120,7 @@ def test_transformers_pipeline_is_reconstructed_in_methods_and_pipeline() -> Non
 
     report = notebook.render_methodology(include_evidence=True)
     assert "## Reproducibility" in report
-    assert "## Preprocessing and augmentation" in report
+    assert "## Tokenization and input preparation" in report
     assert "## Model architecture" in report
     assert "## Evaluation and inference" in report
     assert "transformers.model_from_pretrained" in report
