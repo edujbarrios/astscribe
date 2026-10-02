@@ -5,6 +5,7 @@ from .dependency import (
     NotebookDependencyGraph,
     SymbolRedefinition,
 )
+from .diagnostics import NotebookDiagnostic, NotebookDiagnostics
 from .methodology import MethodologyReport, MethodologySection
 from .notebook import NotebookAnalyzer, SkippedCell
 from .pipeline import ExperimentPipeline, PipelineStage
@@ -21,6 +22,8 @@ __all__ = [
     "MethodologySection",
     "NotebookAnalyzer",
     "NotebookDependencyGraph",
+    "NotebookDiagnostic",
+    "NotebookDiagnostics",
     "PipelineStage",
     "SkippedCell",
     "SymbolRedefinition",

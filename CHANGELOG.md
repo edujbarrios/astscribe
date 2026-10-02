@@ -2,6 +2,27 @@
 
 All notable changes to ASTScribe will be documented in this file.
 
+## [0.7.0] - Unreleased
+
+### Added
+
+- Dependency-aware notebook diagnostics built on the framework-independent cell dependency graph.
+- `dependency.forward_reference` warnings for reads that cannot be resolved in source order but have a supported definition in a later cell.
+- `dependency.unresolved_symbol` warnings for non-builtin reads with no supported notebook definition, explicitly allowing for hidden kernel state or external injection.
+- `dependency.symbol_redefinition` informational findings for cross-cell rebinding of notebook-global names.
+- `dependency.overwritten_before_cross_cell_use` informational findings when a definition is replaced before any later analyzed cell consumes that specific definition.
+- Read-before-write handling so patterns such as `x = x + 1` count as consuming the previous definition before rebinding it.
+- `NotebookAnalyzer.diagnostics()` and `NotebookAnalyzer.render_diagnostics()`.
+- Structured `NotebookDiagnostic` / `NotebookDiagnostics` APIs, stable diagnostic codes, `by_code(...)`, and `to_dict()` export.
+- Original `.ipynb` cell-index preservation in diagnostic locations and related-cell references.
+- Dedicated diagnostic semantics and limitations in `docs/notebook_diagnostics.md`.
+- Tests covering forward references, hidden/external state, redefinitions, conservative overwrite detection, deterministic rendering, and structured output.
+
+### Changed
+
+- ASTScribe can now distinguish a likely source-order notebook dependency from a symbol that remains unresolved across the analyzed notebook, rather than collapsing both cases into the same static finding.
+- Dependency diagnostics use warnings only for unresolved source-order structure and informational severity for potentially confusing but valid notebook rebinding patterns.
+
 ## [0.6.0] - Unreleased
 
 ### Added
