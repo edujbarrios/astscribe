@@ -64,6 +64,15 @@ def test_consumed_definition_is_not_reported_as_overwritten_before_use() -> None
     assert len(diagnostics.by_code("dependency.symbol_redefinition")) == 1
 
 
+def test_read_before_redefinition_counts_as_consumption() -> None:
+    notebook = NotebookAnalyzer.from_cells(["x = 1", "x = x + 1"])
+
+    diagnostics = notebook.diagnostics()
+
+    assert diagnostics.by_code("dependency.overwritten_before_cross_cell_use") == ()
+    assert len(diagnostics.by_code("dependency.symbol_redefinition")) == 1
+
+
 def test_clean_dependency_chain_has_no_diagnostics() -> None:
     notebook = NotebookAnalyzer.from_cells(["x = 1", "y = x + 1", "z = y + 1"])
 
