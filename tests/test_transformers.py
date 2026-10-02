@@ -153,3 +153,24 @@ def test_transformers_inference_pipeline_and_data_collator_are_detected() -> Non
         if operation.kind == "inference_pipeline_configuration"
     )
     assert inference_pipeline.attributes["task"] == "text-classification"
+
+
+def test_transformers_import_aliases_resolve_without_importing_transformers() -> None:
+    result = analyze(
+        "from transformers import AutoModelForCausalLM as LM, AutoTokenizer as Tok\n"
+        "tokenizer = Tok.from_pretrained('gpt2')\n"
+        "model = LM.from_pretrained('gpt2')\n"
+    )
+
+    tokenizer = next(
+        operation
+        for operation in result.operations
+        if operation.kind == "tokenizer_configuration"
+    )
+    model = next(
+        operation
+        for operation in result.operations
+        if operation.kind == "pretrained_model_configuration"
+    )
+    assert tokenizer.subject == "AutoTokenizer"
+    assert model.subject == "AutoModelForCausalLM"
