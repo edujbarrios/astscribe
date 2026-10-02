@@ -61,3 +61,11 @@ packages = ["astscribe"]
 [[tool.mypy.overrides]]
 module = "astscribe.ipython.magic"
 disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+module = [
+  "astscribe.semantics.pytorch",
+  "astscribe.semantics.pytorch_experiment",
+  "astscribe.semantics.pytorch_reproducibility",
+]
+disable_error_code = ["no-redef"]
