@@ -12,6 +12,7 @@ from .pytorch import analyze_pytorch
 from .pytorch_experiment import analyze_pytorch_experiment
 from .pytorch_reproducibility import analyze_pytorch_reproducibility
 from .transformers import analyze_transformers
+from .transformers_models import analyze_transformers_models
 from .transformers_quantization import analyze_transformers_quantization
 
 
@@ -36,6 +37,7 @@ class SemanticRegistry:
             ],
             "transformers": [
                 cast(SemanticAnalyzer, analyze_transformers),
+                cast(SemanticAnalyzer, analyze_transformers_models),
                 cast(SemanticAnalyzer, analyze_transformers_quantization),
             ],
             "datasets": [cast(SemanticAnalyzer, analyze_datasets)],
