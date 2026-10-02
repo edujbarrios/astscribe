@@ -15,6 +15,7 @@ All notable changes to ASTScribe will be documented in this file.
 - Forward-only notebook context through `NotebookAnalyzer`.
 - Cross-cell recovery of optimizer constructors and statically resolvable hyperparameters.
 - Cell-aware evidence provenance for claims derived from earlier notebook cells.
+- Deterministic notebook-level `# Methods` reports with optional evidence appendix.
 - Optional `%%scribe` IPython cell magic.
 - Static safety tests guaranteeing analyzed code is not executed.
 - Apache License 2.0 licensing metadata and NOTICE file.
