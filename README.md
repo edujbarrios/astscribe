@@ -12,7 +12,7 @@ ASTScribe is fully open source under the **Apache License 2.0** and is designed 
 
 Machine-learning notebooks often contain the complete implementation of an experiment while leaving its methodology distributed across many cells. ASTScribe turns that implementation into a conservative scientific description without executing the notebook or sending source code to an external service.
 
-The first development focus is **PyTorch**.
+The current first-class semantic frameworks are **PyTorch** and **Hugging Face Transformers**.
 
 ## Features
 
@@ -21,6 +21,7 @@ The first development focus is **PyTorch**.
 - Evidence-backed claims with source-line and notebook-cell traceability.
 - Forward-only cross-cell context through `NotebookAnalyzer`.
 - PyTorch-aware semantic rules for training, inference, data pipelines, and evaluation workflows.
+- Hugging Face Transformers semantics for pretrained components, tokenization, Trainer workflows, and generation.
 - Static recovery of optimizer type and explicit hyperparameters.
 - Detection of epochs, devices, DataLoaders, schedulers, gradient clipping, and AMP constructs.
 - Torchvision dataset, transform, augmentation, and model semantics.
@@ -54,6 +55,8 @@ For optional IPython/Jupyter integration:
 pip install -e ".[ipython]"
 ```
 
+PyTorch and Transformers are **not** mandatory ASTScribe dependencies. ASTScribe recognizes their source-level APIs without importing or executing those frameworks.
+
 ## Quick Start
 
 ```python
@@ -81,9 +84,44 @@ Gradient tracking is disabled for the enclosed operations, so no autograd graph 
 A forward pass is performed by invoking the model on the supplied inputs.
 ```
 
+## Transformers Example
+
+ASTScribe can reconstruct common Hugging Face workflows without importing Transformers:
+
+```python
+from astscribe import NotebookAnalyzer
+
+notebook = NotebookAnalyzer()
+
+notebook.add_cell("""
+from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
+
+set_seed(42)
+tokenizer = AutoTokenizer.from_pretrained("gpt2")
+model = AutoModelForCausalLM.from_pretrained("gpt2")
+""")
+
+notebook.add_cell("""
+inputs = tokenizer(prompt, return_tensors="pt")
+outputs = model.generate(
+    **inputs,
+    max_new_tokens=64,
+    do_sample=True,
+    temperature=0.7,
+    top_p=0.9,
+)
+text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+""")
+
+print(notebook.render_methodology(include_evidence=True))
+print(notebook.render_pipeline())
+```
+
+Because context flows forward across cells, ASTScribe can connect `model.generate(...)` and `tokenizer.decode(...)` back to the `from_pretrained(...)` constructors observed earlier in the notebook.
+
 ## Analyze a Real Jupyter Notebook
 
-ASTScribe can load a `.ipynb` directly without depending on `nbformat`, Jupyter, or PyTorch:
+ASTScribe can load a `.ipynb` directly without depending on `nbformat`, Jupyter, PyTorch, or Transformers:
 
 ```python
 from astscribe import NotebookAnalyzer
@@ -188,6 +226,7 @@ The report can include sections such as:
 - reproducibility;
 - dataset configuration;
 - preprocessing and augmentation;
+- tokenization and input preparation;
 - data loading;
 - execution environment;
 - model architecture;
@@ -214,7 +253,7 @@ Example:
 ```text
 Dataset
     ↓
-Preprocessing and augmentation
+Preprocessing and input preparation
     ↓
 Data loading
     ↓
@@ -301,7 +340,26 @@ The current rule set intentionally focuses on common, defensible methodology sig
 - checkpoint load/save and `load_state_dict(...)` operations;
 - cross-cell optimizer and loss-constructor context.
 
-The project deliberately prefers a small set of defensible rules over broad heuristics that could produce unsupported scientific claims.
+## Current Transformers Coverage
+
+The Transformers analyzer remains deliberately small and explicit. It currently recognizes:
+
+- `AutoTokenizer*`, processor, image-processor, feature-extractor, and config `from_pretrained(...)` calls;
+- `AutoModel*` and other Transformers model classes loaded through `from_pretrained(...)`;
+- cross-cell tokenizer and processor calls;
+- Transformers model forward calls;
+- explicit `labels=` passed to a model call as supervision evidence;
+- `TrainingArguments` and `Seq2SeqTrainingArguments` with statically resolvable hyperparameters;
+- `Trainer` and `Seq2SeqTrainer` construction;
+- `trainer.train()`, `trainer.evaluate()`, and `trainer.predict()`;
+- common `DataCollator*` classes;
+- `transformers.set_seed(...)`;
+- `transformers.pipeline(...)` task configuration;
+- `model.generate(...)` with explicit token limits, beam-search, and sampling controls;
+- tokenizer `decode(...)` and `batch_decode(...)`;
+- `save_pretrained(...)`.
+
+ASTScribe does **not** infer model quality, dataset suitability, task correctness, hidden defaults, remote model behavior, or scientific conclusions that are not explicit in the notebook source. The project deliberately prefers a small set of defensible rules over broad heuristics that could produce unsupported scientific claims.
 
 ## Jupyter Usage
 
@@ -340,22 +398,25 @@ Import, Symbol & Cross-Cell Resolution
         │
         ▼
 Framework Semantic Analyzers
-        │
-        ▼
-Pattern Recognition
-        │
-        ▼
-       SIR
+   ┌──────────┴──────────┐
+   ▼                     ▼
+PyTorch              Transformers
+   └──────────┬──────────┘
+              ▼
+      Pattern Recognition
+              │
+              ▼
+             SIR
 Scientific Interpretation Representation
-        │
-        ├────────► Cell-level renderers
-        │
-        ├────────► Notebook Methods report
-        │
-        └────────► Structured experiment pipeline
-                         │
-                         ▼
-                  Evidence provenance
+              │
+              ├────────► Cell-level renderers
+              │
+              ├────────► Notebook Methods report
+              │
+              └────────► Structured experiment pipeline
+                               │
+                               ▼
+                        Evidence provenance
 ```
 
 The architecture is intentionally deterministic and inspectable.
@@ -376,6 +437,8 @@ pytest
 ruff check .
 mypy src/astscribe
 ```
+
+The GitHub Actions workflow also builds the wheel and fails if it reaches 1,000,000 bytes. This keeps the lightweight constraint measurable rather than aspirational.
 
 ## Roadmap
 
@@ -407,9 +470,12 @@ mypy src/astscribe
 
 ### v0.3
 
-- Hugging Face Transformers;
-- richer Methods-section generation;
-- notebook-level experiment summaries.
+- Hugging Face Transformers pretrained-component analysis;
+- tokenization and processor semantics;
+- Trainer / TrainingArguments workflows;
+- generation and decoding semantics;
+- richer framework-aware Methods-section generation;
+- cross-cell Transformers context.
 
 ### Future
 
@@ -417,6 +483,7 @@ mypy src/astscribe
 - TensorFlow/Keras;
 - notebook dependency graphs;
 - richer Jupyter visualization;
+- notebook-level experiment summaries and diagnostics;
 - community semantic-rule packs.
 
 ## Citation
