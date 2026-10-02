@@ -69,7 +69,7 @@ def _definition_consumed_before_redefinition(
 ) -> bool:
     return any(
         edge.producer_cell == producer_cell
-        and edge.consumer_cell < redefinition_cell
+        and edge.consumer_cell <= redefinition_cell
         and symbol in edge.symbols
         for edge in graph.edges
     )
@@ -146,5 +146,12 @@ def build_notebook_diagnostics(graph: NotebookDependencyGraph) -> NotebookDiagno
                 )
             )
 
-    diagnostics.sort(key=lambda item: (item.cell, item.code, item.symbol, item.related_cell or -1))
+    diagnostics.sort(
+        key=lambda item: (
+            item.cell,
+            item.code,
+            item.symbol,
+            item.related_cell if item.related_cell is not None else -1,
+        )
+    )
     return NotebookDiagnostics(items=tuple(diagnostics))
