@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from astscribe.api import _analyze_parsed
+from astscribe.dependency import NotebookDependencyGraph, build_dependency_graph
 from astscribe.methodology import MethodologyReport, build_methodology_report
 from astscribe.parser import (
     ImportTable,
@@ -160,6 +161,22 @@ class NotebookAnalyzer:
         """Render composite technique findings with their supporting source evidence."""
 
         return render_techniques(self.techniques())
+
+    def dependency_graph(self) -> NotebookDependencyGraph:
+        """Build a static symbol-flow graph between analyzed notebook cells."""
+
+        cells = tuple(zip(self._cell_indices, self._cells, strict=True))
+        return build_dependency_graph(cells)
+
+    def render_dependency_graph(self) -> str:
+        """Render cross-cell symbol dependencies as deterministic text."""
+
+        return self.dependency_graph().render()
+
+    def dependency_dot(self) -> str:
+        """Export the dependency graph as Graphviz DOT without requiring Graphviz."""
+
+        return self.dependency_graph().to_dot()
 
     @property
     def cell_count(self) -> int:
