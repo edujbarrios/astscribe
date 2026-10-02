@@ -120,7 +120,11 @@ def _known_model_call(node: ast.Call, symbols: SymbolTable) -> bool:
     if node.func.id == "model":
         return True
     constructor = symbols.resolve_constructor(node.func.id)
-    return bool(constructor and constructor.startswith("torch.nn."))
+    return bool(
+        constructor
+        and constructor.startswith("torch.nn.")
+        and constructor not in _LOSSES
+    )
 
 
 def _known_loss_call(node: ast.Call, symbols: SymbolTable) -> bool:
@@ -247,7 +251,10 @@ def analyze_pytorch(
                 )
             )
             claims.append(
-                Claim("Previously accumulated optimizer gradients are reset before the next update.", ev)
+                Claim(
+                    "Previously accumulated optimizer gradients are reset before the next update.",
+                    ev,
+                )
             )
             continue
 
