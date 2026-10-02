@@ -50,6 +50,7 @@ def build_methodology_report(results: tuple[AnalysisResult, ...]) -> Methodology
         "Reproducibility": [],
         "Dataset": [],
         "Preprocessing and augmentation": [],
+        "Tokenization and input preparation": [],
         "Data loading": [],
         "Execution environment": [],
         "Model architecture": [],
@@ -101,13 +102,21 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         "pytorch.use_deterministic_algorithms",
         "pytorch.cudnn_deterministic",
         "pytorch.cudnn_benchmark",
+        "transformers.set_seed",
     }:
         return "Reproducibility"
     if rule in {"pytorch.dataset_configuration", "pytorch.dataset_split"}:
         return "Dataset"
     if rule == "pytorch.preprocessing_transform":
         return "Preprocessing and augmentation"
-    if rule == "pytorch.dataloader":
+    if rule in {
+        "transformers.tokenizer_from_pretrained",
+        "transformers.processor_from_pretrained",
+        "transformers.tokenization",
+        "transformers.input_processing",
+    }:
+        return "Tokenization and input preparation"
+    if rule in {"pytorch.dataloader", "transformers.data_collator"}:
         return "Data loading"
     if rule in {"pytorch.device_configuration", "pytorch.device_transfer"}:
         return "Execution environment"
@@ -115,6 +124,8 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         "pytorch.model_configuration",
         "pytorch.model_head_replacement",
         "pytorch.parameter_freeze",
+        "transformers.config_from_pretrained",
+        "transformers.model_from_pretrained",
     }:
         return "Model architecture"
     if rule == "pytorch.loss_configuration":
@@ -144,16 +155,27 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         "pytorch.checkpoint_save",
         "pytorch.checkpoint_load",
         "pytorch.load_state_dict",
+        "transformers.save_pretrained",
     }:
         return "Checkpointing"
     if rule in {
         "pytorch.model_eval",
         "pytorch.no_grad",
         "pytorch.inference_mode",
+        "transformers.generate",
+        "transformers.output_decoding",
+        "transformers.pipeline_configuration",
+        "transformers.trainer_evaluate",
+        "transformers.trainer_predict",
     }:
         return "Evaluation and inference"
     if rule == "pytorch.forward_pass" and result.inference is not None:
         return "Evaluation and inference"
+    if rule == "transformers.forward_pass":
+        if result.inference is not None:
+            return "Evaluation and inference"
+        if any(operation.kind == "supervision_labels" for operation in result.operations):
+            return "Training procedure"
     if rule in {
         "pytorch.model_train",
         "pytorch.optimizer_zero_grad",
@@ -161,6 +183,10 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         "pytorch.optimizer_step",
         "pytorch.loss_computation",
         "pytorch.epoch_loop",
+        "transformers.training_arguments",
+        "transformers.trainer_configuration",
+        "transformers.trainer_train",
+        "transformers.labels_supplied",
     }:
         return "Training procedure"
     if rule == "pytorch.forward_pass" and result.training_step is not None:
