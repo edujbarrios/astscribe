@@ -95,7 +95,13 @@ def build_methodology_report(results: tuple[AnalysisResult, ...]) -> Methodology
 def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
     rule = claim.rule
 
-    if rule == "pytorch.manual_seed":
+    if rule in {
+        "pytorch.manual_seed",
+        "pytorch.cuda_manual_seed_all",
+        "pytorch.use_deterministic_algorithms",
+        "pytorch.cudnn_deterministic",
+        "pytorch.cudnn_benchmark",
+    }:
         return "Reproducibility"
     if rule in {"pytorch.dataset_configuration", "pytorch.dataset_split"}:
         return "Dataset"
