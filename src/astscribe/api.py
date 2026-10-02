@@ -19,12 +19,16 @@ def _analyze_parsed(
     symbols: SymbolTable,
 ) -> AnalysisResult:
     result = AnalysisResult(source=parsed.source)
-    for framework, analyzer in DEFAULT_REGISTRY.analyzers().items():
-        semantic = analyzer(parsed, imports, symbols)
-        if semantic.operations or semantic.claims:
+    for framework, analyzers in DEFAULT_REGISTRY.analyzers().items():
+        framework_detected = False
+        for analyzer in analyzers:
+            semantic = analyzer(parsed, imports, symbols)
+            if semantic.operations or semantic.claims:
+                framework_detected = True
+                result.operations.extend(semantic.operations)
+                result.claims.extend(semantic.claims)
+        if framework_detected:
             result.frameworks.append(framework)
-            result.operations.extend(semantic.operations)
-            result.claims.extend(semantic.claims)
 
     result.training_step = detect_training_step(result.operations)
     result.inference = detect_inference(result.operations)

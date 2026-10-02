@@ -2,6 +2,32 @@
 
 All notable changes to ASTScribe will be documented in this file.
 
+## [0.2.0] - Unreleased
+
+### Added
+
+- Experiment-level semantic analysis for torchvision datasets and model constructors.
+- Static detection of `torch.utils.data.random_split(...)` dataset partitions.
+- Preprocessing and data-augmentation analysis for common torchvision transforms.
+- Scientific descriptions for composed preprocessing pipelines without claiming unsupported performance effects.
+- Model architecture reconstruction for torchvision models and PyTorch head replacement.
+- Explicit parameter-freezing analysis through `requires_grad = False`.
+- TorchMetrics configuration analysis.
+- Argmax prediction-selection and softmax-normalization analysis.
+- `load_state_dict(...)` checkpoint restoration semantics.
+- Reproducibility analysis for CUDA seeds, deterministic algorithms, and cuDNN deterministic/benchmark flags.
+- Structured `ExperimentPipeline` / `PipelineStage` API.
+- `NotebookAnalyzer.pipeline()` and `NotebookAnalyzer.render_pipeline()`.
+- More granular Methods sections for dataset, preprocessing, model architecture, objective, evaluation, metrics, and reproducibility.
+- GitHub Actions quality gates for Ruff and strict mypy checks.
+- A CI-enforced wheel-size limit of less than 1,000,000 bytes.
+
+### Changed
+
+- The semantic registry now supports multiple analyzers per framework, allowing experiment-level rules to evolve independently from the core PyTorch analyzer.
+- Notebook methodology reports now follow the order of a typical ML experiment more closely.
+- Static analyzer typing is validated in CI while keeping optional IPython typing exceptions narrowly scoped.
+
 ## [0.1.0] - Unreleased
 
 ### Added

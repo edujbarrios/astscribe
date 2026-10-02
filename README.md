@@ -20,9 +20,11 @@ The first development focus is **PyTorch**.
 - Direct `.ipynb` loading using only the Python standard library.
 - Evidence-backed claims with source-line and notebook-cell traceability.
 - Forward-only cross-cell context through `NotebookAnalyzer`.
-- PyTorch-aware semantic rules for training and inference workflows.
+- PyTorch-aware semantic rules for training, inference, data pipelines, and evaluation workflows.
 - Static recovery of optimizer type and explicit hyperparameters.
 - Detection of epochs, devices, DataLoaders, schedulers, gradient clipping, and AMP constructs.
+- Torchvision dataset, transform, augmentation, and model semantics.
+- Structured experiment-pipeline reconstruction.
 - Scientific, educational, and concise cell-level rendering styles.
 - Deterministic notebook-level `# Methods` reports.
 - Optional evidence appendix linking scientific claims back to source cells and lines.
@@ -181,17 +183,70 @@ for epoch in range(epochs):
 print(notebook.render_methodology(include_evidence=True))
 ```
 
-The report groups claims into sections such as:
+The report can include sections such as:
 
 - reproducibility;
-- data preparation;
+- dataset configuration;
+- preprocessing and augmentation;
+- data loading;
 - execution environment;
+- model architecture;
 - model and objective;
 - optimization;
 - numerical precision;
 - training procedure;
-- inference procedure;
+- evaluation and inference;
+- metrics;
 - checkpointing.
+
+## Experiment Pipeline Reconstruction
+
+ASTScribe also exposes a structured experiment pipeline built from detected operations rather than generated prose:
+
+```python
+notebook = NotebookAnalyzer.from_ipynb("training.ipynb")
+
+print(notebook.render_pipeline())
+```
+
+Example:
+
+```text
+Dataset
+    ↓
+Preprocessing and augmentation
+    ↓
+Data loading
+    ↓
+Model architecture
+    ↓
+Objective
+    ↓
+Optimization
+    ↓
+Training procedure
+    ↓
+Evaluation and inference
+    ↓
+Metrics
+    ↓
+Checkpointing
+```
+
+The same information is available as structured data:
+
+```python
+pipeline = notebook.pipeline()
+
+for stage in pipeline.stages:
+    print(stage.key, stage.operations)
+
+payload = pipeline.to_dict()
+```
+
+Only stages supported by detected evidence are included. A missing stage means that ASTScribe did not find sufficient supported evidence; it does not prove that the experiment omitted that stage.
+
+See [`docs/experiment_pipeline.md`](docs/experiment_pipeline.md) for the current semantics and design constraints.
 
 ## Evidence Model
 
@@ -236,7 +291,14 @@ The current rule set intentionally focuses on common, defensible methodology sig
 - `torch.nn.utils.clip_grad_norm_` and `clip_grad_value_`;
 - `torch.autocast`, `torch.amp.autocast`, and CUDA autocast;
 - `GradScaler` configuration, scaling, stepping, and updating;
-- checkpoint load/save operations;
+- common torchvision dataset constructors;
+- `torch.utils.data.random_split(...)`;
+- common torchvision preprocessing and stochastic augmentation operations;
+- torchvision model constructors and PyTorch model-head replacement;
+- explicit `requires_grad = False` parameter freezing;
+- TorchMetrics configuration;
+- argmax-based prediction selection and softmax normalization;
+- checkpoint load/save and `load_state_dict(...)` operations;
 - cross-cell optimizer and loss-constructor context.
 
 The project deliberately prefers a small set of defensible rules over broad heuristics that could produce unsupported scientific claims.
@@ -277,7 +339,7 @@ model.eval()
 Import, Symbol & Cross-Cell Resolution
         │
         ▼
-Framework Semantic Rules
+Framework Semantic Analyzers
         │
         ▼
 Pattern Recognition
@@ -286,15 +348,14 @@ Pattern Recognition
        SIR
 Scientific Interpretation Representation
         │
-        ▼
-Evidence-Backed Claims
-        │
         ├────────► Cell-level renderers
         │
-        └────────► Notebook Methods report
+        ├────────► Notebook Methods report
+        │
+        └────────► Structured experiment pipeline
                          │
                          ▼
-                  Evidence appendix
+                  Evidence provenance
 ```
 
 The architecture is intentionally deterministic and inspectable.
@@ -335,11 +396,14 @@ mypy src/astscribe
 
 ### v0.2
 
-- richer preprocessing and augmentation analysis;
+- torchvision dataset and model analysis;
+- preprocessing and augmentation analysis;
+- model-head replacement and parameter-freezing analysis;
+- TorchMetrics and prediction-selection analysis;
+- structured experiment-pipeline reconstruction;
+- more granular notebook-level Methods sections;
 - deeper reproducibility inspection;
-- notebook-level methodology graph;
-- more optimizer, loss, and scheduler families;
-- richer static model-architecture descriptions.
+- more optimizer, loss, and scheduler families.
 
 ### v0.3
 

@@ -29,3 +29,62 @@ jobs:
 
       - name: Run tests
         run: python -m pytest
+
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install development dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Ruff
+        run: ruff check .
+
+      - name: Mypy
+        run: mypy src/astscribe
+
+  package-size:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build wheel
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip wheel . --no-deps --wheel-dir dist
+
+      - name: Enforce sub-1MB wheel
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          wheels = list(Path("dist").glob("astscribe-*.whl"))
+          if len(wheels) != 1:
+              raise SystemExit(f"Expected exactly one ASTScribe wheel, found {len(wheels)}")
+
+          wheel = wheels[0]
+          size = wheel.stat().st_size
+          limit = 1_000_000
+          print(f"{wheel.name}: {size:,} bytes ({size / 1024:.1f} KiB)")
+          if size >= limit:
+              raise SystemExit(
+                  f"ASTScribe wheel exceeds the {limit:,}-byte project limit: {size:,} bytes"
+              )
+          PY

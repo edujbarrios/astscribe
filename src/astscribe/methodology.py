@@ -48,13 +48,17 @@ class MethodologyReport:
 def build_methodology_report(results: tuple[AnalysisResult, ...]) -> MethodologyReport:
     buckets: dict[str, list[Claim]] = {
         "Reproducibility": [],
-        "Data preparation": [],
+        "Dataset": [],
+        "Preprocessing and augmentation": [],
+        "Data loading": [],
         "Execution environment": [],
+        "Model architecture": [],
         "Model and objective": [],
         "Optimization": [],
         "Numerical precision": [],
         "Training procedure": [],
-        "Inference procedure": [],
+        "Evaluation and inference": [],
+        "Metrics": [],
         "Checkpointing": [],
         "Other methodology": [],
     }
@@ -91,12 +95,28 @@ def build_methodology_report(results: tuple[AnalysisResult, ...]) -> Methodology
 def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
     rule = claim.rule
 
-    if rule == "pytorch.manual_seed":
+    if rule in {
+        "pytorch.manual_seed",
+        "pytorch.cuda_manual_seed_all",
+        "pytorch.use_deterministic_algorithms",
+        "pytorch.cudnn_deterministic",
+        "pytorch.cudnn_benchmark",
+    }:
         return "Reproducibility"
+    if rule in {"pytorch.dataset_configuration", "pytorch.dataset_split"}:
+        return "Dataset"
+    if rule == "pytorch.preprocessing_transform":
+        return "Preprocessing and augmentation"
     if rule == "pytorch.dataloader":
-        return "Data preparation"
+        return "Data loading"
     if rule in {"pytorch.device_configuration", "pytorch.device_transfer"}:
         return "Execution environment"
+    if rule in {
+        "pytorch.model_configuration",
+        "pytorch.model_head_replacement",
+        "pytorch.parameter_freeze",
+    }:
+        return "Model architecture"
     if rule == "pytorch.loss_configuration":
         return "Model and objective"
     if rule in {
@@ -114,12 +134,26 @@ def _section_for_claim(claim: Claim, result: AnalysisResult) -> str:
         "pytorch.grad_scaler_update",
     }:
         return "Numerical precision"
-    if rule in {"pytorch.checkpoint_save", "pytorch.checkpoint_load"}:
+    if rule in {
+        "pytorch.metric_configuration",
+        "pytorch.prediction_argmax",
+        "pytorch.softmax",
+    }:
+        return "Metrics"
+    if rule in {
+        "pytorch.checkpoint_save",
+        "pytorch.checkpoint_load",
+        "pytorch.load_state_dict",
+    }:
         return "Checkpointing"
-    if rule in {"pytorch.model_eval", "pytorch.no_grad", "pytorch.inference_mode"}:
-        return "Inference procedure"
+    if rule in {
+        "pytorch.model_eval",
+        "pytorch.no_grad",
+        "pytorch.inference_mode",
+    }:
+        return "Evaluation and inference"
     if rule == "pytorch.forward_pass" and result.inference is not None:
-        return "Inference procedure"
+        return "Evaluation and inference"
     if rule in {
         "pytorch.model_train",
         "pytorch.optimizer_zero_grad",

@@ -14,6 +14,7 @@ from astscribe.parser import (
     build_symbol_table,
     parse_source,
 )
+from astscribe.pipeline import ExperimentPipeline, build_experiment_pipeline
 from astscribe.sir import AnalysisResult
 
 
@@ -138,6 +139,16 @@ class NotebookAnalyzer:
         """Render the notebook methodology as deterministic Markdown."""
 
         return self.methodology().render(include_evidence=include_evidence)
+
+    def pipeline(self) -> ExperimentPipeline:
+        """Build a structured experiment pipeline from evidence-backed operations."""
+
+        return build_experiment_pipeline(self.results)
+
+    def render_pipeline(self) -> str:
+        """Render the reconstructed experiment pipeline as a compact text diagram."""
+
+        return self.pipeline().render()
 
     @property
     def cell_count(self) -> int:
