@@ -2,6 +2,27 @@
 
 All notable changes to ASTScribe will be documented in this file.
 
+## [0.4.0] - Unreleased
+
+### Added
+
+- First PEFT semantic analyzer with no runtime `peft` dependency.
+- Static analysis for `peft.*Config` adapter configurations, including LoRA, AdaLoRA, and IA3 family labeling when explicit from the config class.
+- Recovery of statically resolvable LoRA settings such as rank, alpha, dropout, bias, literal target modules, and PEFT task type expressions.
+- `get_peft_model(...)` adapter-application analysis with forward-only cross-cell recovery of adapter configuration.
+- `prepare_model_for_kbit_training(...)` semantics without automatically claiming QLoRA.
+- `PeftModel*.from_pretrained(...)` adapter checkpoint loading with explicit adapter identifier and trainability settings when statically resolvable.
+- PEFT adapter save, load, activation, addition, merge, and state-dictionary extraction semantics.
+- Dedicated `Parameter-efficient fine-tuning` notebook Methods section.
+- Optional `adaptation` experiment-pipeline stage between model architecture and objective/optimization.
+- PEFT evidence contract and explicit non-goals in `docs/peft_semantics.md`.
+- Tests for LoRA hyperparameters, cross-cell adapter context, adapter checkpoint operations, k-bit preparation, and pipeline reconstruction.
+
+### Changed
+
+- ASTScribe now supports PyTorch, Hugging Face Transformers, and PEFT as first-class semantic frameworks.
+- Experiment pipelines can distinguish base-model construction from parameter-efficient adaptation without changing pipelines that contain no PEFT evidence.
+
 ## [0.3.0] - Unreleased
 
 ### Added
