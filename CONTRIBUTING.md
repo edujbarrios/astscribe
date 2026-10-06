@@ -8,7 +8,7 @@ ASTScribe is open source and welcomes contributions through issues and pull requ
 git clone https://github.com/edujbarrios/astscribe.git
 cd astscribe
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
 ```
 
@@ -19,6 +19,9 @@ pytest
 ruff check .
 mypy src/astscribe
 ```
+
+Release preparation and Trusted Publishing setup are documented in
+[`docs/releasing.md`](docs/releasing.md).
 
 ## Adding a semantic rule
 

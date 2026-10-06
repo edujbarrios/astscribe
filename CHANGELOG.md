@@ -2,6 +2,9 @@
 
 All notable changes to ASTScribe will be documented in this file.
 
+Versions 0.1.0 through 0.7.0 were internal development milestones and were not
+published to PyPI.
+
 ## [0.8.0] - Unreleased
 
 ### Added
@@ -9,14 +12,18 @@ All notable changes to ASTScribe will be documented in this file.
 - Transitive notebook impact analysis, propagation paths, prerequisite discovery, and impact ranking.
 - Command-line interface for Python explanations and notebook methodology, pipeline, technique, dependency, diagnostic, and impact reports.
 - `py.typed` marker for typed-library consumers.
+- Complete source distributions containing project documentation, examples, and community files.
 - Trusted Publishing workflow for tagged PyPI releases, including distribution validation.
+- Manual TestPyPI rehearsal workflow and a release checklist with exact publisher settings.
+- Python 3.14 support in package metadata and the CI test matrix.
 
 ### Changed
 
 - Package metadata now uses `astscribe.__version__` as its single version source.
 - CI validates both wheel and source distributions with Twine before release.
+- Distribution CI installs the built wheel and exercises its command-line entry point.
 
-## [0.7.0] - Unreleased
+## [0.7.0] - 2026-10-02
 
 ### Added
 
@@ -37,7 +44,7 @@ All notable changes to ASTScribe will be documented in this file.
 - ASTScribe can now distinguish a likely source-order notebook dependency from a symbol that remains unresolved across the analyzed notebook, rather than collapsing both cases into the same static finding.
 - Dependency diagnostics use warnings only for unresolved source-order structure and informational severity for potentially confusing but valid notebook rebinding patterns.
 
-## [0.6.0] - Unreleased
+## [0.6.0] - 2026-10-02
 
 ### Added
 
@@ -58,7 +65,7 @@ All notable changes to ASTScribe will be documented in this file.
 - ASTScribe now includes a framework-independent notebook structural/dataflow layer in addition to framework semantic analysis, experiment reconstruction, and composite-technique detection.
 - Dependency analysis is flow-sensitive to supported syntactic event order while remaining intentionally non-branch-sensitive and independent of historical Jupyter kernel execution state.
 
-## [0.5.0] - Unreleased
+## [0.5.0] - 2026-10-02
 
 ### Added
 
@@ -83,7 +90,7 @@ All notable changes to ASTScribe will be documented in this file.
 - ASTScribe now supports PyTorch, Hugging Face Transformers, Hugging Face Datasets, and PEFT as first-class semantic frameworks.
 - The experiment pipeline can distinguish dataset preparation, model architecture, quantization, and parameter-efficient adaptation as separate evidence-backed stages.
 
-## [0.4.0] - Unreleased
+## [0.4.0] - 2026-10-02
 
 ### Added
 
@@ -104,7 +111,7 @@ All notable changes to ASTScribe will be documented in this file.
 - ASTScribe now supports PyTorch, Hugging Face Transformers, and PEFT as first-class semantic frameworks.
 - Experiment pipelines can distinguish base-model construction from parameter-efficient adaptation without changing pipelines that contain no PEFT evidence.
 
-## [0.3.0] - Unreleased
+## [0.3.0] - 2026-10-02
 
 ### Added
 
@@ -130,7 +137,7 @@ All notable changes to ASTScribe will be documented in this file.
 - ASTScribe now supports PyTorch and Hugging Face Transformers as first-class semantic frameworks.
 - Transformers tokenization and processor operations share the existing structured preprocessing pipeline stage while receiving a dedicated Methods section, preserving the public pipeline title used by v0.2.
 
-## [0.2.0] - Unreleased
+## [0.2.0] - 2026-10-02
 
 ### Added
 
@@ -156,7 +163,7 @@ All notable changes to ASTScribe will be documented in this file.
 - Notebook methodology reports now follow the order of a typical ML experiment more closely.
 - Static analyzer typing is validated in CI while keeping optional IPython typing exceptions narrowly scoped.
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-10-02
 
 ### Added
 

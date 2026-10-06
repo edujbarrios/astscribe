@@ -61,6 +61,10 @@ For optional IPython/Jupyter integration:
 pip install -e ".[ipython]"
 ```
 
+The first public PyPI release is currently being prepared. Release maintainers can
+follow the [release checklist](https://github.com/edujbarrios/astscribe/blob/main/docs/releasing.md),
+including a TestPyPI rehearsal.
+
 ## Command Line
 
 The installed package includes an `astscribe` command. Explain a Python file:
@@ -347,7 +351,7 @@ Only stages supported by detected evidence are included. A missing stage means t
 
 Transformers tokenization and processor operations retain the existing structured `preprocessing` stage for backwards compatibility, while the Methods report gives them the more precise `Tokenization and input preparation` section.
 
-See [`docs/experiment_pipeline.md`](docs/experiment_pipeline.md), [`docs/transformers_semantics.md`](docs/transformers_semantics.md), [`docs/peft_semantics.md`](docs/peft_semantics.md), and [`docs/datasets_quantization.md`](docs/datasets_quantization.md) for the current evidence contracts and explicit non-goals.
+See the documentation for [experiment pipelines](https://github.com/edujbarrios/astscribe/blob/main/docs/experiment_pipeline.md), [Transformers semantics](https://github.com/edujbarrios/astscribe/blob/main/docs/transformers_semantics.md), [PEFT semantics](https://github.com/edujbarrios/astscribe/blob/main/docs/peft_semantics.md), and [Datasets and quantization](https://github.com/edujbarrios/astscribe/blob/main/docs/datasets_quantization.md) for the current evidence contracts and explicit non-goals.
 
 ## Evidence Model
 
@@ -512,7 +516,8 @@ ASTScribe is fully open source. The analysis engine, semantic rules, renderers, 
 
 The project does not require proprietary APIs, external AI services, telemetry systems, or closed-source runtime components.
 
-Community contributions are welcome through issues and pull requests. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Community contributions are welcome through issues and pull requests. See the
+[contribution guide](https://github.com/edujbarrios/astscribe/blob/main/CONTRIBUTING.md).
 
 ## Development
 
@@ -559,15 +564,17 @@ The GitHub Actions workflow builds the wheel and fails if it reaches 1,000,000 b
 - notebook dependency graphs;
 - richer Jupyter visualization;
 - notebook-level experiment diagnostics;
+- published semantic-rule extension API;
 - community semantic-rule packs.
 
 ## Citation
 
-If ASTScribe contributes to academic or scientific work, please cite the software using [CITATION.cff](CITATION.cff).
+If ASTScribe contributes to academic or scientific work, please cite the software using
+the repository's [citation metadata](https://github.com/edujbarrios/astscribe/blob/main/CITATION.cff).
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
+Apache License 2.0. See the [license text](https://github.com/edujbarrios/astscribe/blob/main/LICENSE).
 
 ## Author
 
