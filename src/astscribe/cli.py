@@ -42,6 +42,11 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="fail if a notebook code cell is not valid Python instead of skipping it",
     )
+    parser.add_argument(
+        "--dot",
+        action="store_true",
+        help="render --report dependencies as Graphviz DOT",
+    )
     return parser
 
 
@@ -57,7 +62,9 @@ def _render_notebook(args: argparse.Namespace) -> str:
     if args.report == "techniques":
         return notebook.render_techniques()
     if args.report == "dependencies":
-        return notebook.render_dependency_graph()
+        return notebook.dependency_dot() if args.dot else notebook.render_dependency_graph()
+    if args.dot:
+        raise ValueError("--dot is only supported with --report dependencies")
     if args.report == "diagnostics":
         return notebook.render_diagnostics()
     if args.cell is None:
