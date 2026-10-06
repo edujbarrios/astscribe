@@ -12,6 +12,7 @@ from astscribe.impact import (
     NotebookImpactReport,
     build_impact_report,
     rank_cells_by_impact,
+    render_impact_ranking,
 )
 from astscribe.methodology import MethodologyReport, build_methodology_report
 from astscribe.parser import (
@@ -213,6 +214,11 @@ class NotebookAnalyzer:
         """Rank analyzed cells by downstream static blast radius."""
 
         return rank_cells_by_impact(self.dependency_graph())
+
+    def render_impact_ranking(self) -> str:
+        """Render cells ordered by downstream static blast radius."""
+
+        return render_impact_ranking(self.impact_ranking())
 
     @property
     def cell_count(self) -> int:
