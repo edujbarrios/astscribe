@@ -132,3 +132,74 @@ def test_cli_renders_impact_ranking(
     output = capsys.readouterr().out
     assert output.startswith("# Notebook impact ranking")
     assert "Cell 0: 2 affected cell(s)" in output
+
+
+def test_cli_emits_json_for_python_source(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    source = tmp_path / "inference.py"
+    source.write_text("model.eval()\n", encoding="utf-8")
+
+    assert main([str(source), "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["inference"]["evaluation_mode"] is True
+    assert payload["claims"]
+
+
+def test_cli_emits_json_for_notebook_diagnostics(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    notebook = tmp_path / "diagnostics.ipynb"
+    notebook.write_text(
+        json.dumps(
+            {
+                "cells": [
+                    {"cell_type": "code", "source": "result = future + 1"},
+                    {"cell_type": "code", "source": "future = 41"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert main([str(notebook), "--report", "diagnostics", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["items"][0]["code"] == "dependency.forward_reference"
+    assert payload["items"][0]["related_cell"] == 1
+
+
+def test_cli_emits_json_for_impact_ranking(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    notebook = tmp_path / "ranking.ipynb"
+    notebook.write_text(
+        json.dumps(
+            {
+                "cells": [
+                    {"cell_type": "code", "source": "x = source()"},
+                    {"cell_type": "code", "source": "y = transform(x)"},
+                    {"cell_type": "code", "source": "z = consume(y)"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert main([str(notebook), "--report", "ranking", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["items"][0] == {
+        "affected_cells": 2,
+        "cell": 0,
+        "direct_dependents": 1,
+    }
+
+
+def test_cli_rejects_json_and_dot_together(tmp_path: Path) -> None:
+    notebook = tmp_path / "experiment.ipynb"
+    notebook.write_text('{"cells": []}', encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="2"):
+        main([str(notebook), "--report", "dependencies", "--json", "--dot"])
