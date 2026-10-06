@@ -5,6 +5,20 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.8.5] - 2026-10-06
+
+### Added
+
+- Exact generated output beneath the Python Quick Start example so the library's behavior is visible directly from the README.
+- A notebook dependency-graph Quick Start example with its deterministic output.
+- A regression test that locks the documented scientific Quick Start output.
+
+### Changed
+
+- Refreshed the README badges with clearer PyPI, Python, CI, downloads, and license labels.
+- Made the primary Quick Start source self-contained by including the PyTorch import.
+- Improved the README flow so installation, generated output, notebook analysis, and CLI usage are visible earlier.
+
 ## [0.8.4] - 2026-10-06
 
 ### Added
