@@ -5,6 +5,21 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.8.1] - 2026-10-06
+
+### Added
+
+- Command-line support for reading Python source from standard input with `astscribe -`, making ASTScribe easier to use in pipes and CI workflows.
+
+### Changed
+
+- Simplified the README around installation, core usage, notebook analysis, CLI examples, and semantic scope.
+- Added PyPI version and supported-Python badges to the README.
+
+### Fixed
+
+- Invalid notebook files whose JSON root is not an object now raise a clear validation error instead of leaking an `AttributeError` through the CLI.
+
 ## [0.8.0] - 2026-10-06
 
 ### Added
