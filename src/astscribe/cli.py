@@ -13,7 +13,11 @@ def _parser() -> argparse.ArgumentParser:
         prog="astscribe",
         description="Explain Python ML code and inspect Jupyter notebooks without executing them.",
     )
-    parser.add_argument("path", type=Path, help="Python source file or Jupyter notebook")
+    parser.add_argument(
+        "path",
+        type=Path,
+        help="Python source file, Jupyter notebook, or '-' to read Python source from stdin",
+    )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
         "--style",
@@ -61,7 +65,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.path.suffix.lower() == ".ipynb":
             output = _render_notebook(args)
         else:
-            source = args.path.read_text(encoding="utf-8")
+            source = sys.stdin.read() if str(args.path) == "-" else args.path.read_text(encoding="utf-8")
             output = str(explain(source, style=args.style))
     except (OSError, ValueError, SyntaxError) as exc:
         parser.error(str(exc))
