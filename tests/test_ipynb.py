@@ -54,3 +54,8 @@ def test_from_ipynb_can_fail_strictly_on_invalid_python() -> None:
 def test_from_ipynb_rejects_invalid_notebook_shape() -> None:
     with pytest.raises(ValueError):
         NotebookAnalyzer.from_ipynb_data({"metadata": {}})
+
+
+def test_from_ipynb_rejects_non_object_root() -> None:
+    with pytest.raises(ValueError, match="top-level object"):
+        NotebookAnalyzer.from_ipynb_data([])
