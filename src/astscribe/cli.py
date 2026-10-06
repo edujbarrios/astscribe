@@ -27,7 +27,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--report",
-        choices=("methodology", "pipeline", "techniques", "dependencies", "diagnostics", "impact"),
+        choices=(
+            "methodology",
+            "pipeline",
+            "techniques",
+            "dependencies",
+            "diagnostics",
+            "impact",
+            "ranking",
+        ),
         default="methodology",
         help="notebook report to render (default: methodology)",
     )
@@ -67,6 +75,8 @@ def _render_notebook(args: argparse.Namespace) -> str:
         return notebook.dependency_dot() if args.dot else notebook.render_dependency_graph()
     if args.report == "diagnostics":
         return notebook.render_diagnostics()
+    if args.report == "ranking":
+        return notebook.render_impact_ranking()
     if args.cell is None:
         raise ValueError("--cell is required when --report impact is selected")
     return notebook.render_impact(args.cell)

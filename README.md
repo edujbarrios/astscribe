@@ -56,6 +56,7 @@ astscribe training.py --style concise
 astscribe experiment.ipynb --report methodology --evidence
 astscribe experiment.ipynb --report diagnostics
 astscribe experiment.ipynb --report impact --cell 3
+astscribe experiment.ipynb --report ranking
 astscribe experiment.ipynb --report dependencies --dot
 
 # Read Python source from stdin

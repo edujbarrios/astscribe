@@ -114,6 +114,8 @@ The current graph intentionally avoids several common false dependencies:
 - function bodies are not considered executed merely because a function is defined;
 - function default expressions are analyzed because they are evaluated at definition time;
 - class bodies are analyzed because they execute when the class is defined, while class-local bindings do not become notebook globals;
+- annotation-only names such as `x: int` are not treated as runtime value producers;
+- nested comprehensions and nested classes do not capture an outer class namespace as a lexical scope;
 - attribute or subscript assignment does not create a new notebook-global symbol, although its base/index expressions can be read;
 - `del name` removes that name as a future static producer.
 
@@ -131,7 +133,7 @@ Function bodies are not traversed as immediate execution dependencies. Reference
 
 Expressions evaluated while defining the function, such as defaults and decorators, can create dependencies.
 
-Class bases, class keywords, decorators, and class-body statements are analyzed. Reads from earlier notebook cells can therefore create dependency edges during class definition, while assignments, imports, and method names created inside the class remain class-local.
+Class bases, class keywords, decorators, and class-body statements are analyzed. Reads from earlier notebook cells can therefore create dependency edges during class definition, while assignments, imports, and method names created inside the class remain class-local. Class namespaces are not treated as closure scopes for nested comprehensions or nested classes, matching Python name-resolution behavior more closely.
 
 ## DOT export
 

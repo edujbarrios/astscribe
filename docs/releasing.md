@@ -52,6 +52,7 @@ overwrite an existing version tag, builds and smoke-tests the distributions, cre
 the annotated `vX.Y.Z` tag, publishes those exact artifacts to PyPI with Trusted
 Publishing, and finally creates the matching GitHub Release.
 
-A guarded push trigger exists only to bootstrap the workflow itself: a change to
-`.github/workflows/release.yml` on `main` publishes only when that commit message
-contains `[publish-pypi]`. Normal source-code pushes never publish a release.
+A guarded push trigger also supports repository automation: changes to release
+metadata (`astscribe.__version__`, `CITATION.cff`, `CHANGELOG.md`, or the workflow
+itself) on `main` publish only when the commit message contains `[publish-pypi]`.
+Normal source-code pushes never publish a release.

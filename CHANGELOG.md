@@ -5,6 +5,25 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.8.4] - 2026-10-06
+
+### Added
+
+- A `ranking` CLI report that renders notebook cells ordered by downstream static blast radius.
+- `NotebookAnalyzer.render_impact_ranking()` for deterministic text output of impact rankings.
+- Regression coverage for annotation-only assignments, class-local deletion, and class-comprehension scope behavior.
+
+### Changed
+
+- Class-scope tracking now models the fact that class namespaces are not enclosing lexical scopes for nested comprehensions or nested classes.
+- The guarded release workflow now reacts to version metadata changes, so future releases do not require an unrelated edit to `release.yml`.
+
+### Fixed
+
+- Annotation-only statements such as `x: int` no longer create a false runtime producer for `x`.
+- Deleting a class-local name now exposes an outer notebook producer to later reads in the same class body when appropriate.
+- Comprehensions inside class bodies no longer incorrectly capture class-local names as lexical closures.
+
 ## [0.8.3] - 2026-10-06
 
 ### Added

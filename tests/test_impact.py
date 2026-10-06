@@ -147,3 +147,20 @@ def test_isolated_cell_has_zero_blast_radius() -> None:
     assert impact.blast_radius == 0
     assert impact.paths == ()
     assert impact.render().startswith("# Impact analysis for Cell 0")
+
+
+def test_impact_ranking_rendering_is_deterministic() -> None:
+    notebook = NotebookAnalyzer.from_cells(
+        [
+            "config = make_config()",
+            "model = build_model(config)",
+            "dataset = load_dataset(config)",
+            "trainer = make_trainer(model, dataset, config)",
+        ]
+    )
+
+    rendered = notebook.render_impact_ranking()
+
+    assert rendered.startswith("# Notebook impact ranking")
+    assert rendered.index("Cell 0") < rendered.index("Cell 1")
+    assert "3 affected cell(s)" in rendered

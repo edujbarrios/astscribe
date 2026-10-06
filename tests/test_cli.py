@@ -109,3 +109,26 @@ def test_cli_rejects_dot_for_non_dependency_report(tmp_path: Path) -> None:
 
     with pytest.raises(SystemExit, match="2"):
         main([str(notebook), "--report", "diagnostics", "--dot"])
+
+
+def test_cli_renders_impact_ranking(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    notebook = tmp_path / "ranking.ipynb"
+    notebook.write_text(
+        json.dumps(
+            {
+                "cells": [
+                    {"cell_type": "code", "source": "config = make_config()"},
+                    {"cell_type": "code", "source": "model = build_model(config)"},
+                    {"cell_type": "code", "source": "result = evaluate(model)"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert main([str(notebook), "--report", "ranking"]) == 0
+    output = capsys.readouterr().out
+    assert output.startswith("# Notebook impact ranking")
+    assert "Cell 0: 2 affected cell(s)" in output
