@@ -16,6 +16,7 @@ published to PyPI.
 
 - Simplified the README further around installation, quick-start usage, notebook reports, CLI examples, and supported semantics.
 - Made the release checklist version-agnostic and aligned it with the actual dynamic version source.
+- Made the production release workflow self-contained: it can be run from Actions, derives the version, validates/builds first, creates the annotated tag, publishes to PyPI, and creates the GitHub Release.
 
 ### Fixed
 
