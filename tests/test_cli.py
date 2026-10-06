@@ -138,7 +138,13 @@ def test_cli_emits_json_for_python_source(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     source = tmp_path / "inference.py"
-    source.write_text("model.eval()\n", encoding="utf-8")
+    source.write_text(
+        "import torch\n"
+        "model.eval()\n"
+        "with torch.no_grad():\n"
+        "    outputs = model(inputs)\n",
+        encoding="utf-8",
+    )
 
     assert main([str(source), "--json"]) == 0
     payload = json.loads(capsys.readouterr().out)
