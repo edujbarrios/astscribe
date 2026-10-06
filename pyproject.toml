@@ -71,6 +71,7 @@ packages = ["astscribe"]
 [[tool.mypy.overrides]]
 module = "astscribe.ipython.magic"
 disallow_untyped_calls = false
+disallow_untyped_decorators = false
 
 [[tool.mypy.overrides]]
 module = [
