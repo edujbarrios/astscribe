@@ -5,6 +5,22 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.8.2] - 2026-10-06
+
+### Added
+
+- A `--strict` CLI option for notebooks, allowing CI and validation workflows to fail when a code cell is not valid Python instead of silently skipping it.
+- A PyPI downloads badge alongside the existing PyPI version and supported-Python badges.
+
+### Changed
+
+- Simplified the README further around installation, quick-start usage, notebook reports, CLI examples, and supported semantics.
+- Made the release checklist version-agnostic and aligned it with the actual dynamic version source.
+
+### Fixed
+
+- Removed the misleading release-checklist instruction to compare `pyproject.toml` with the package version even though the project declares its version dynamically.
+
 ## [0.8.1] - 2026-10-06
 
 ### Added

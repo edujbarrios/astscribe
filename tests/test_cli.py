@@ -58,6 +58,21 @@ def test_cli_reports_invalid_notebook_root(
     assert "expected a top-level object" in capsys.readouterr().err
 
 
+def test_cli_strict_notebook_rejects_invalid_python(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    notebook = tmp_path / "invalid-python.ipynb"
+    notebook.write_text(
+        json.dumps({"cells": [{"cell_type": "code", "source": "!pip install torch"}]}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit, match="2"):
+        main([str(notebook), "--strict"])
+
+    assert "invalid syntax" in capsys.readouterr().err
+
+
 def test_cli_requires_cell_for_impact_report(tmp_path: Path) -> None:
     notebook = tmp_path / "experiment.ipynb"
     notebook.write_text('{"cells": []}', encoding="utf-8")

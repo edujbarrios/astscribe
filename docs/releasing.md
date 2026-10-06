@@ -39,13 +39,13 @@ the name in advance.
 ## Production release
 
 1. Confirm `main` is green and the worktree is clean.
-2. Replace `Unreleased` for the current version in `CHANGELOG.md` with the release date.
-3. Confirm `pyproject.toml`, `astscribe.__version__`, and `CITATION.cff` agree.
+2. Add the dated release section to `CHANGELOG.md`.
+3. Confirm `astscribe.__version__`, `CITATION.cff`, and `CHANGELOG.md` agree.
 4. Create and push an annotated version tag:
 
    ```bash
-   git tag -a v0.8.0 -m "ASTScribe 0.8.0"
-   git push origin v0.8.0
+   git tag -a vX.Y.Z -m "ASTScribe X.Y.Z"
+   git push origin vX.Y.Z
    ```
 
 5. Approve the `pypi` environment deployment in GitHub Actions.
