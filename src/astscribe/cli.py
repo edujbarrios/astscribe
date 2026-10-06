@@ -77,7 +77,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        if args.path.suffix.lower() == ".ipynb":
+        is_notebook = args.path.suffix.lower() == ".ipynb"
+        if args.dot and not is_notebook:
+            raise ValueError("--dot is only supported with notebook --report dependencies")
+        if is_notebook:
             output = _render_notebook(args)
         else:
             source = sys.stdin.read() if str(args.path) == "-" else args.path.read_text(encoding="utf-8")
