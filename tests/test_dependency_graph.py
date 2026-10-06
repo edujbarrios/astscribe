@@ -182,3 +182,43 @@ def test_class_body_imports_remain_class_local() -> None:
     assert graph.nodes[0].defines == ("Constants",)
     assert "math" not in graph.nodes[0].unresolved_reads
     assert graph.nodes[1].unresolved_reads == ("math",)
+
+
+def test_annotation_only_name_does_not_create_runtime_producer() -> None:
+    notebook = NotebookAnalyzer.from_cells(["x: int", "y = x"])
+
+    graph = notebook.dependency_graph()
+
+    assert "x" not in graph.nodes[0].defines
+    assert graph.edges == ()
+    assert graph.nodes[1].unresolved_reads == ("x",)
+
+
+def test_class_comprehension_does_not_capture_class_local_name() -> None:
+    notebook = NotebookAnalyzer.from_cells(
+        [
+            "x = 10",
+            "class Config:\n    x = 1\n    values = [x for _ in range(1)]",
+        ]
+    )
+
+    graph = notebook.dependency_graph()
+
+    assert [(edge.producer_cell, edge.consumer_cell, edge.symbols) for edge in graph.edges] == [
+        (0, 1, ("x",)),
+    ]
+
+
+def test_class_delete_exposes_outer_notebook_producer_again() -> None:
+    notebook = NotebookAnalyzer.from_cells(
+        [
+            "x = 10",
+            "class Config:\n    x = 1\n    del x\n    fallback = x",
+        ]
+    )
+
+    graph = notebook.dependency_graph()
+
+    assert [(edge.producer_cell, edge.consumer_cell, edge.symbols) for edge in graph.edges] == [
+        (0, 1, ("x",)),
+    ]
