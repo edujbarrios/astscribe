@@ -5,6 +5,23 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.8.6] - 2026-10-06
+
+### Added
+
+- Structured CLI output with `--json` for Python analysis and every notebook report, including methodology, pipeline, techniques, dependencies, diagnostics, impact, and impact ranking.
+- Deterministic JSON wrappers for notebook technique and ranking collections, making them easier to consume from CI, shell scripts, and tools such as `jq`.
+- Regression coverage for JSON CLI output and Python's comprehension execution-scope behavior inside class bodies.
+
+### Changed
+
+- The README now documents JSON output examples for source analysis, diagnostics, and per-cell impact reports.
+- Dependency analysis now models the outermost comprehension iterable separately from the nested comprehension scope.
+
+### Fixed
+
+- A comprehension inside a class could incorrectly treat a class-local name used by its first iterable as an outer notebook dependency.
+
 ## [0.8.5] - 2026-10-06
 
 ### Added
