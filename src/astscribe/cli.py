@@ -55,6 +55,8 @@ def _render_notebook(args: argparse.Namespace) -> str:
         args.path,
         skip_invalid_python=not args.strict,
     )
+    if args.dot and args.report != "dependencies":
+        raise ValueError("--dot is only supported with --report dependencies")
     if args.report == "methodology":
         return notebook.render_methodology(include_evidence=args.evidence)
     if args.report == "pipeline":
@@ -63,8 +65,6 @@ def _render_notebook(args: argparse.Namespace) -> str:
         return notebook.render_techniques()
     if args.report == "dependencies":
         return notebook.dependency_dot() if args.dot else notebook.render_dependency_graph()
-    if args.dot:
-        raise ValueError("--dot is only supported with --report dependencies")
     if args.report == "diagnostics":
         return notebook.render_diagnostics()
     if args.cell is None:
