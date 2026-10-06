@@ -37,11 +37,19 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="include source evidence in methodology reports",
     )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="fail if a notebook code cell is not valid Python instead of skipping it",
+    )
     return parser
 
 
 def _render_notebook(args: argparse.Namespace) -> str:
-    notebook = NotebookAnalyzer.from_ipynb(args.path)
+    notebook = NotebookAnalyzer.from_ipynb(
+        args.path,
+        skip_invalid_python=not args.strict,
+    )
     if args.report == "methodology":
         return notebook.render_methodology(include_evidence=args.evidence)
     if args.report == "pipeline":
