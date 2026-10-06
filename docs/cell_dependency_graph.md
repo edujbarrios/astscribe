@@ -116,6 +116,7 @@ The current graph intentionally avoids several common false dependencies:
 - class bodies are analyzed because they execute when the class is defined, while class-local bindings do not become notebook globals;
 - annotation-only names such as `x: int` are not treated as runtime value producers;
 - nested comprehensions and nested classes do not capture an outer class namespace as a lexical scope;
+- a comprehension's outermost iterable is evaluated in the surrounding scope before the comprehension scope begins, matching Python's execution model;
 - attribute or subscript assignment does not create a new notebook-global symbol, although its base/index expressions can be read;
 - `del name` removes that name as a future static producer.
 
