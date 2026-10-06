@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 from astscribe.api import _analyze_parsed
 from astscribe.dependency import NotebookDependencyGraph, build_dependency_graph
@@ -74,11 +73,14 @@ class NotebookAnalyzer:
     @classmethod
     def from_ipynb_data(
         cls,
-        data: dict[str, Any],
+        data: object,
         *,
         skip_invalid_python: bool = True,
     ) -> NotebookAnalyzer:
         """Build an analyzer from an already-decoded Jupyter notebook document."""
+
+        if not isinstance(data, dict):
+            raise ValueError("Invalid notebook: expected a top-level object.")
 
         cells = data.get("cells")
         if not isinstance(cells, list):
