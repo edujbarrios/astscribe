@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 EventKind = Literal["read", "write", "delete"]
+ScopeKind = Literal["class", "comprehension"]
 _BUILTIN_NAMES = frozenset(dir(__import__("builtins"))) | {
     "__name__",
     "__file__",
@@ -104,6 +105,7 @@ class _EventCollector(ast.NodeVisitor):
     def __init__(self) -> None:
         self.events: list[SymbolEvent] = []
         self._locals: list[set[str]] = []
+        self._scope_kinds: list[ScopeKind] = []
 
     def _emit(self, kind: EventKind, symbol: str, node: ast.AST) -> None:
         self.events.append(
@@ -116,7 +118,17 @@ class _EventCollector(ast.NodeVisitor):
         )
 
     def _is_local(self, name: str) -> bool:
-        return any(name in scope for scope in reversed(self._locals))
+        for depth, (scope, kind) in enumerate(
+            zip(reversed(self._locals), reversed(self._scope_kinds), strict=True)
+        ):
+            # Class namespaces are not enclosing lexical scopes for nested
+            # classes or comprehensions. The current class body can use its
+            # own names, but nested scopes must fall back past outer classes.
+            if depth > 0 and kind == "class":
+                continue
+            if name in scope:
+                return True
+        return False
 
     def _define_name(self, name: str, node: ast.AST) -> None:
         if self._locals:
@@ -141,7 +153,9 @@ class _EventCollector(ast.NodeVisitor):
 
     def _delete_target(self, node: ast.AST) -> None:
         if isinstance(node, ast.Name):
-            if not self._is_local(node.id):
+            if self._locals:
+                self._locals[-1].discard(node.id)
+            else:
                 self._emit("delete", node.id, node)
             return
         if isinstance(node, ast.Tuple | ast.List):
@@ -191,7 +205,11 @@ class _EventCollector(ast.NodeVisitor):
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         if node.value is not None:
             self.visit(node.value)
-        self._write_target(node.target)
+            self._write_target(node.target)
+        elif not isinstance(node.target, ast.Name):
+            # Annotation-only names do not bind a runtime value. Attribute
+            # and subscript targets can still evaluate their base/index.
+            self.visit(node.target)
 
     def visit_AugAssign(self, node: ast.AugAssign) -> None:
         if isinstance(node.target, ast.Name) and not self._is_local(node.target.id):
@@ -242,10 +260,12 @@ class _EventCollector(ast.NodeVisitor):
         # A class body executes immediately, unlike a function body. Track reads
         # from notebook globals while keeping names bound inside the class local.
         self._locals.append(set())
+        self._scope_kinds.append("class")
         try:
             for statement in node.body:
                 self.visit(statement)
         finally:
+            self._scope_kinds.pop()
             self._locals.pop()
 
         self._define_name(node.name, node)
@@ -268,6 +288,7 @@ class _EventCollector(ast.NodeVisitor):
         final_nodes: tuple[ast.AST, ...],
     ) -> None:
         self._locals.append(set())
+        self._scope_kinds.append("comprehension")
         try:
             for generator in generators:
                 self.visit(generator.iter)
@@ -277,6 +298,7 @@ class _EventCollector(ast.NodeVisitor):
             for node in final_nodes:
                 self.visit(node)
         finally:
+            self._scope_kinds.pop()
             self._locals.pop()
 
     def visit_ListComp(self, node: ast.ListComp) -> None:
