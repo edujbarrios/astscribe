@@ -222,3 +222,32 @@ def test_class_delete_exposes_outer_notebook_producer_again() -> None:
     assert [(edge.producer_cell, edge.consumer_cell, edge.symbols) for edge in graph.edges] == [
         (0, 1, ("x",)),
     ]
+
+
+def test_class_comprehension_first_iterable_uses_class_scope() -> None:
+    notebook = NotebookAnalyzer.from_cells(
+        [
+            "size = 99",
+            "class Config:\n    size = 3\n    values = [item for item in range(size)]",
+        ]
+    )
+
+    graph = notebook.dependency_graph()
+
+    assert graph.edges == ()
+    assert "size" not in graph.nodes[1].unresolved_reads
+
+
+def test_class_comprehension_body_still_skips_class_scope() -> None:
+    notebook = NotebookAnalyzer.from_cells(
+        [
+            "value = 10",
+            "class Config:\n    value = 3\n    values = [value for _ in range(1)]",
+        ]
+    )
+
+    graph = notebook.dependency_graph()
+
+    assert [(edge.producer_cell, edge.consumer_cell, edge.symbols) for edge in graph.edges] == [
+        (0, 1, ("value",)),
+    ]

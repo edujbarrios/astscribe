@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: "Barrios"
     given-names: "Eduardo J."
-version: 0.8.5
+version: 0.8.6
 date-released: 2026-10-06
 repository-code: "https://github.com/edujbarrios/astscribe"
 url: "https://github.com/edujbarrios/astscribe"

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
-from astscribe import NotebookAnalyzer, __version__, explain
+from astscribe import NotebookAnalyzer, __version__, analyze, explain
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -50,12 +52,36 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="fail if a notebook code cell is not valid Python instead of skipping it",
     )
-    parser.add_argument(
+    output_group = parser.add_mutually_exclusive_group()
+    output_group.add_argument(
         "--dot",
         action="store_true",
         help="render --report dependencies as Graphviz DOT",
     )
+    output_group.add_argument(
+        "--json",
+        action="store_true",
+        help="emit structured JSON instead of rendered text",
+    )
     return parser
+
+
+def _notebook_payload(notebook: NotebookAnalyzer, args: argparse.Namespace) -> Any:
+    if args.report == "methodology":
+        return notebook.methodology().to_dict()
+    if args.report == "pipeline":
+        return notebook.pipeline().to_dict()
+    if args.report == "techniques":
+        return {"items": [finding.to_dict() for finding in notebook.techniques()]}
+    if args.report == "dependencies":
+        return notebook.dependency_graph().to_dict()
+    if args.report == "diagnostics":
+        return notebook.diagnostics().to_dict()
+    if args.report == "ranking":
+        return {"items": [summary.to_dict() for summary in notebook.impact_ranking()]}
+    if args.cell is None:
+        raise ValueError("--cell is required when --report impact is selected")
+    return notebook.impact(args.cell).to_dict()
 
 
 def _render_notebook(args: argparse.Namespace) -> str:
@@ -65,6 +91,8 @@ def _render_notebook(args: argparse.Namespace) -> str:
     )
     if args.dot and args.report != "dependencies":
         raise ValueError("--dot is only supported with --report dependencies")
+    if args.json:
+        return json.dumps(_notebook_payload(notebook, args), indent=2, sort_keys=True)
     if args.report == "methodology":
         return notebook.render_methodology(include_evidence=args.evidence)
     if args.report == "pipeline":
@@ -94,7 +122,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             output = _render_notebook(args)
         else:
             source = sys.stdin.read() if str(args.path) == "-" else args.path.read_text(encoding="utf-8")
-            output = str(explain(source, style=args.style))
+            if args.json:
+                output = json.dumps(analyze(source).to_dict(), indent=2, sort_keys=True)
+            else:
+                output = str(explain(source, style=args.style))
     except (OSError, ValueError, SyntaxError) as exc:
         parser.error(str(exc))
 

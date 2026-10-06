@@ -287,14 +287,27 @@ class _EventCollector(ast.NodeVisitor):
         generators: list[ast.comprehension],
         final_nodes: tuple[ast.AST, ...],
     ) -> None:
+        first, *remaining = generators
+
+        # Python evaluates the outermost iterable in the surrounding scope
+        # before entering the comprehension's nested scope. This matters in
+        # class bodies, whose namespace is visible to that first iterable but
+        # is not an enclosing lexical scope for the rest of the comprehension.
+        self.visit(first.iter)
+
         self._locals.append(set())
         self._scope_kinds.append("comprehension")
         try:
-            for generator in generators:
+            self._write_target(first.target)
+            for condition in first.ifs:
+                self.visit(condition)
+
+            for generator in remaining:
                 self.visit(generator.iter)
                 self._write_target(generator.target)
                 for condition in generator.ifs:
                     self.visit(condition)
+
             for node in final_nodes:
                 self.visit(node)
         finally:

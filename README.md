@@ -92,6 +92,11 @@ astscribe experiment.ipynb --report impact --cell 3
 astscribe experiment.ipynb --report ranking
 astscribe experiment.ipynb --report dependencies --dot
 
+# Structured output for scripts, CI, and jq
+astscribe training.py --json
+astscribe experiment.ipynb --report diagnostics --json
+astscribe experiment.ipynb --report impact --cell 3 --json
+
 # Read Python source from stdin
 printf 'model.eval()\n' | astscribe - --style concise
 
@@ -99,7 +104,9 @@ printf 'model.eval()\n' | astscribe - --style concise
 astscribe experiment.ipynb --report diagnostics --strict
 ```
 
-The same CLI is available as `python -m astscribe`.
+The same CLI is available as `python -m astscribe`. Use `--json` with Python source
+or any notebook report to emit the underlying structured analysis instead of rendered
+text. JSON output is deterministic and uses only the Python standard library.
 
 ## Supported semantics
 
