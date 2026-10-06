@@ -7,6 +7,9 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/release.yml"
+      - "src/astscribe/__init__.py"
+      - "CITATION.cff"
+      - "CHANGELOG.md"
 
 permissions:
   contents: read
