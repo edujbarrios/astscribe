@@ -2,11 +2,11 @@
 
 > Evidence-backed scientific explanations for ML notebooks, without LLMs.
 
-[![PyPI version](https://img.shields.io/pypi/v/astscribe.svg)](https://pypi.org/project/astscribe/)
-[![Python versions](https://img.shields.io/pypi/pyversions/astscribe.svg)](https://pypi.org/project/astscribe/)
-[![PyPI downloads](https://img.shields.io/pypi/dm/astscribe.svg)](https://pypi.org/project/astscribe/)
-[![Tests](https://github.com/edujbarrios/astscribe/actions/workflows/tests.yml/badge.svg)](https://github.com/edujbarrios/astscribe/actions/workflows/tests.yml)
-[![License](https://img.shields.io/github/license/edujbarrios/astscribe.svg)](https://github.com/edujbarrios/astscribe/blob/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/astscribe?label=PyPI&logo=pypi&logoColor=white)](https://pypi.org/project/astscribe/)
+[![Python](https://img.shields.io/pypi/pyversions/astscribe?logo=python&logoColor=white)](https://pypi.org/project/astscribe/)
+[![CI](https://github.com/edujbarrios/astscribe/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/edujbarrios/astscribe/actions/workflows/tests.yml)
+[![Downloads](https://img.shields.io/pypi/dm/astscribe?label=downloads)](https://pypi.org/project/astscribe/)
+[![License](https://img.shields.io/pypi/l/astscribe)](https://github.com/edujbarrios/astscribe/blob/main/LICENSE)
 
 ASTScribe statically analyzes Python and Jupyter notebooks and turns supported ML
 operations into deterministic, traceable explanations.
@@ -27,24 +27,57 @@ python -m pip install "astscribe[ipython]"
 
 ## Quick start
 
+ASTScribe analyzes source code without executing it:
+
 ```python
 from astscribe import explain
 
-print(explain("""
+source = """
+import torch
+
 model.eval()
 with torch.no_grad():
     outputs = model(inputs)
-""", style="scientific"))
+"""
+
+print(explain(source, style="scientific"))
 ```
 
-For notebooks:
+Output:
+
+```text
+Inference procedure
+
+Gradient tracking is disabled for the enclosed operations, so no autograd graph is constructed for computations executed within this context.
+
+The model is explicitly configured in evaluation mode.
+
+A forward pass is performed by invoking the model on the supplied inputs.
+```
+
+For notebook-level structure:
 
 ```python
 from astscribe import NotebookAnalyzer
 
-notebook = NotebookAnalyzer.from_ipynb("experiment.ipynb")
-print(notebook.render_methodology(include_evidence=True))
-print(notebook.render_diagnostics())
+notebook = NotebookAnalyzer.from_cells(
+    [
+        "dataset = load_data()",
+        "features = preprocess(dataset)",
+        "result = evaluate(features)",
+    ]
+)
+
+print(notebook.render_dependency_graph())
+```
+
+Output:
+
+```text
+# Cell dependency graph
+
+Cell 0 -> Cell 1 [dataset]
+Cell 1 -> Cell 2 [features]
 ```
 
 ASTScribe only reports claims supported by the source it can inspect.
