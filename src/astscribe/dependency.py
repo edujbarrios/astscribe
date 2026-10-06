@@ -118,12 +118,15 @@ class _EventCollector(ast.NodeVisitor):
     def _is_local(self, name: str) -> bool:
         return any(name in scope for scope in reversed(self._locals))
 
+    def _define_name(self, name: str, node: ast.AST) -> None:
+        if self._locals:
+            self._locals[-1].add(name)
+        else:
+            self._emit("write", name, node)
+
     def _write_target(self, node: ast.AST) -> None:
         if isinstance(node, ast.Name):
-            if not self._locals:
-                self._emit("write", node.id, node)
-            else:
-                self._locals[-1].add(node.id)
+            self._define_name(node.id, node)
             return
         if isinstance(node, ast.Tuple | ast.List):
             for element in node.elts:
@@ -156,7 +159,7 @@ class _EventCollector(ast.NodeVisitor):
         for default in (*node.args.defaults, *node.args.kw_defaults):
             if default is not None:
                 self.visit(default)
-        self._emit("write", node.name, node)
+        self._define_name(node.name, node)
 
     def _visit_for(self, node: ast.For | ast.AsyncFor) -> None:
         self.visit(node.iter)
@@ -209,13 +212,13 @@ class _EventCollector(ast.NodeVisitor):
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
             name = alias.asname or alias.name.split(".", 1)[0]
-            self._emit("write", name, node)
+            self._define_name(name, node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         for alias in node.names:
             if alias.name == "*":
                 continue
-            self._emit("write", alias.asname or alias.name, node)
+            self._define_name(alias.asname or alias.name, node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         self._visit_function_definition(node)
@@ -235,7 +238,17 @@ class _EventCollector(ast.NodeVisitor):
             self.visit(base)
         for keyword in node.keywords:
             self.visit(keyword.value)
-        self._emit("write", node.name, node)
+
+        # A class body executes immediately, unlike a function body. Track reads
+        # from notebook globals while keeping names bound inside the class local.
+        self._locals.append(set())
+        try:
+            for statement in node.body:
+                self.visit(statement)
+        finally:
+            self._locals.pop()
+
+        self._define_name(node.name, node)
 
     def visit_For(self, node: ast.For) -> None:
         self._visit_for(node)
