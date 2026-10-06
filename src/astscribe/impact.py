@@ -218,3 +218,16 @@ def rank_cells_by_impact(
             key=lambda item: (-item.affected_cells, -item.direct_dependents, item.cell),
         )
     )
+
+
+def render_impact_ranking(summaries: tuple[CellImpactSummary, ...]) -> str:
+    if not summaries:
+        return "No analyzable notebook cells are available."
+
+    lines = ["# Notebook impact ranking", ""]
+    for summary in summaries:
+        lines.append(
+            f"- Cell {summary.cell}: {summary.affected_cells} affected cell(s), "
+            f"{summary.direct_dependents} direct dependent(s)."
+        )
+    return "\n".join(lines)
