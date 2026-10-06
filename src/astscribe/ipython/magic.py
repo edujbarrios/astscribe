@@ -12,7 +12,7 @@ def load_ipython_extension(ipython: Any) -> None:
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError("Install ASTScribe with the 'ipython' extra to use %%scribe.") from exc
 
-    @register_cell_magic
+    @register_cell_magic  # type: ignore[misc]
     def scribe(line: str, cell: str) -> None:
         style = line.strip() or "scientific"
         display(Markdown(str(explain(cell, style=style))))

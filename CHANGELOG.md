@@ -2,6 +2,20 @@
 
 All notable changes to ASTScribe will be documented in this file.
 
+## [0.8.0] - Unreleased
+
+### Added
+
+- Transitive notebook impact analysis, propagation paths, prerequisite discovery, and impact ranking.
+- Command-line interface for Python explanations and notebook methodology, pipeline, technique, dependency, diagnostic, and impact reports.
+- `py.typed` marker for typed-library consumers.
+- Trusted Publishing workflow for tagged PyPI releases, including distribution validation.
+
+### Changed
+
+- Package metadata now uses `astscribe.__version__` as its single version source.
+- CI validates both wheel and source distributions with Twine before release.
+
 ## [0.7.0] - Unreleased
 
 ### Added

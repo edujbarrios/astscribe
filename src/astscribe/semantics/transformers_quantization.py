@@ -51,7 +51,7 @@ def _static_value(node: ast.AST, symbols: SymbolTable, imports: ImportTable) -> 
     if isinstance(node, ast.Attribute):
         name = _dotted_name(node)
         return imports.resolve_dotted(name) if name else None
-    if isinstance(node, (ast.List, ast.Tuple)):
+    if isinstance(node, ast.List | ast.Tuple):
         values: list[Any] = []
         for element in node.elts:
             value = _static_value(element, symbols, imports)

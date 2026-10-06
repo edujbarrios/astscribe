@@ -52,7 +52,7 @@ def _static_value(
     literal = symbols.resolve_constant(node)
     if literal is not None:
         return literal
-    if isinstance(node, (ast.List, ast.Tuple)):
+    if isinstance(node, ast.List | ast.Tuple):
         values: list[Any] = []
         for element in node.elts:
             value = _static_value(element, symbols, imports)

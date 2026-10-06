@@ -41,7 +41,7 @@ class SymbolTable:
             return self.constants.get(node.id)
         if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
             value = self.resolve_constant(node.operand)
-            if isinstance(value, (int, float)):
+            if isinstance(value, int | float):
                 return -value
         return None
 
@@ -101,7 +101,7 @@ def build_symbol_table(
     table = base.copy() if base is not None else SymbolTable()
 
     for node in tree.body:
-        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+        if not isinstance(node, ast.Assign | ast.AnnAssign):
             continue
 
         target: ast.AST | None

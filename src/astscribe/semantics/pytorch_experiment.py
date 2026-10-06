@@ -65,11 +65,11 @@ def _static_value(parsed: ParsedSource, symbols: SymbolTable, node: ast.AST) -> 
     value = symbols.resolve_constant(node)
     if value is not None:
         return value
-    if isinstance(node, (ast.Tuple, ast.List)):
+    if isinstance(node, ast.Tuple | ast.List):
         values = [_static_value(parsed, symbols, item) for item in node.elts]
         if all(value is not None for value in values):
             return tuple(values) if isinstance(node, ast.Tuple) else values
-    if isinstance(node, (ast.Name, ast.Attribute)):
+    if isinstance(node, ast.Name | ast.Attribute):
         return _dotted_name(node)
     return None
 
@@ -94,7 +94,7 @@ def _assignment_target(node: ast.AST) -> str | None:
         return node.id
     if isinstance(node, ast.Attribute):
         return _dotted_name(node)
-    if isinstance(node, (ast.Tuple, ast.List)):
+    if isinstance(node, ast.Tuple | ast.List):
         names = [_assignment_target(element) for element in node.elts]
         if all(name is not None for name in names):
             return ", ".join(name for name in names if name is not None)
@@ -128,7 +128,7 @@ def _transform_name(path: str) -> str:
 
 
 def _transform_sequence(call: ast.Call, imports: ImportTable) -> list[str]:
-    if not call.args or not isinstance(call.args[0], (ast.List, ast.Tuple)):
+    if not call.args or not isinstance(call.args[0], ast.List | ast.Tuple):
         return []
     names: list[str] = []
     for element in call.args[0].elts:
@@ -407,10 +407,12 @@ def analyze_pytorch_experiment(
 
         if path.endswith(".load_state_dict") and isinstance(node.func, ast.Attribute):
             ev = _evidence(parsed, node, EvidenceLevel.E3, "pytorch.load_state_dict")
-            subject = _dotted_name(node.func.value)
-            operations.append(Operation("state_dict_load", "pytorch", subject=subject, evidence=ev))
+            load_subject = _dotted_name(node.func.value)
+            operations.append(
+                Operation("state_dict_load", "pytorch", subject=load_subject, evidence=ev)
+            )
             claims.append(
-                Claim(f"Serialized parameter state is loaded into `{subject or 'the model'}`.", ev)
+                Claim(f"Serialized parameter state is loaded into `{load_subject or 'the model'}`.", ev)
             )
 
     return SemanticOutput(operations=operations, claims=claims)

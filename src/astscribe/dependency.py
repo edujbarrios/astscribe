@@ -125,7 +125,7 @@ class _EventCollector(ast.NodeVisitor):
             else:
                 self._locals[-1].add(node.id)
             return
-        if isinstance(node, (ast.Tuple, ast.List)):
+        if isinstance(node, ast.Tuple | ast.List):
             for element in node.elts:
                 self._write_target(element)
             return
@@ -141,7 +141,7 @@ class _EventCollector(ast.NodeVisitor):
             if not self._is_local(node.id):
                 self._emit("delete", node.id, node)
             return
-        if isinstance(node, (ast.Tuple, ast.List)):
+        if isinstance(node, ast.Tuple | ast.List):
             for element in node.elts:
                 self._delete_target(element)
             return

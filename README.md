@@ -41,7 +41,7 @@ ASTScribe deliberately favors a smaller number of auditable semantic rules over 
 
 ## Installation
 
-ASTScribe is not published on PyPI yet. Install the development version directly from the repository:
+Install the latest development version directly from the repository:
 
 ```bash
 git clone https://github.com/edujbarrios/astscribe.git
@@ -60,6 +60,24 @@ For optional IPython/Jupyter integration:
 ```bash
 pip install -e ".[ipython]"
 ```
+
+## Command Line
+
+The installed package includes an `astscribe` command. Explain a Python file:
+
+```bash
+astscribe training.py --style concise
+```
+
+Render notebook-level reports without executing the notebook:
+
+```bash
+astscribe experiment.ipynb --report methodology --evidence
+astscribe experiment.ipynb --report diagnostics
+astscribe experiment.ipynb --report impact --cell 3
+```
+
+The same interface is available as `python -m astscribe`.
 
 PyTorch, Transformers, Datasets, PEFT, and bitsandbytes are **not** mandatory ASTScribe dependencies. ASTScribe recognizes supported source-level APIs without importing or executing those frameworks.
 

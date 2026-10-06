@@ -60,7 +60,7 @@ def analyze_pytorch_reproducibility(
     claims: list[Claim] = []
 
     for node in ast.walk(parsed.tree):
-        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+        if isinstance(node, ast.Assign | ast.AnnAssign):
             target, value_node = _assigned_value(node)
             if target is None or value_node is None:
                 continue

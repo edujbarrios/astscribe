@@ -580,17 +580,19 @@ def analyze_pytorch(
             continue
 
         if _known_model_call(node, symbols):
-            subject = node.func.id if isinstance(node.func, ast.Name) else None
+            model_subject = node.func.id if isinstance(node.func, ast.Name) else None
             ev = _evidence(parsed, node, EvidenceLevel.E1, "pytorch.forward_pass")
-            operations.append(Operation("forward_pass", "pytorch", subject=subject, evidence=ev))
+            operations.append(
+                Operation("forward_pass", "pytorch", subject=model_subject, evidence=ev)
+            )
             claims.append(
                 Claim("A forward pass is performed by invoking the model on the supplied inputs.", ev)
             )
         elif _known_loss_call(node, symbols):
-            subject = node.func.id if isinstance(node.func, ast.Name) else None
+            loss_subject = node.func.id if isinstance(node.func, ast.Name) else None
             ev = _evidence(parsed, node, EvidenceLevel.E2, "pytorch.loss_computation")
             operations.append(
-                Operation("loss_computation", "pytorch", subject=subject, evidence=ev)
+                Operation("loss_computation", "pytorch", subject=loss_subject, evidence=ev)
             )
             claims.append(
                 Claim(
