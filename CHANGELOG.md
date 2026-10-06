@@ -5,6 +5,24 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.8.3] - 2026-10-06
+
+### Added
+
+- CLI Graphviz DOT export for notebook dependency graphs with `--report dependencies --dot`.
+- Regression coverage for class-body dependency execution, UTF-8 BOM notebooks, malformed notebook source arrays, and DOT CLI output.
+
+### Changed
+
+- Class bodies now participate in notebook dependency analysis because their statements execute when the class is defined, while names bound inside the class remain class-local.
+- Notebook files are opened with `utf-8-sig`, accepting both ordinary UTF-8 and UTF-8 files with a byte-order mark.
+
+### Fixed
+
+- Cross-cell dependencies referenced only from class bodies were previously missed.
+- Imports and assignments inside a class body could be misclassified as notebook-global definitions once class-body analysis was added.
+- Code-cell source arrays containing non-string values are no longer silently coerced into Python source.
+
 ## [0.8.2] - 2026-10-06
 
 ### Added

@@ -153,3 +153,32 @@ def test_symbol_events_keep_read_before_write_order() -> None:
         ("read", "x"),
         ("write", "x"),
     ]
+
+
+def test_class_body_reads_create_cross_cell_dependencies() -> None:
+    notebook = NotebookAnalyzer.from_cells(
+        [
+            "default_batch_size = 32",
+            "class Config:\n    batch_size = default_batch_size\n    doubled = batch_size * 2",
+        ]
+    )
+
+    graph = notebook.dependency_graph()
+
+    assert [(edge.producer_cell, edge.consumer_cell, edge.symbols) for edge in graph.edges] == [
+        (0, 1, ("default_batch_size",)),
+    ]
+    assert graph.nodes[1].defines == ("Config",)
+    assert "batch_size" not in graph.nodes[1].unresolved_reads
+
+
+def test_class_body_imports_remain_class_local() -> None:
+    notebook = NotebookAnalyzer.from_cells(
+        ["class Constants:\n    import math\n    tau = math.tau", "value = math.pi"]
+    )
+
+    graph = notebook.dependency_graph()
+
+    assert graph.nodes[0].defines == ("Constants",)
+    assert "math" not in graph.nodes[0].unresolved_reads
+    assert graph.nodes[1].unresolved_reads == ("math",)

@@ -2,6 +2,7 @@ name: release
 
 on:
   workflow_dispatch:
+  # Guarded push trigger lets repository automation publish after a reviewed release PR.
   push:
     branches: [main]
     paths:

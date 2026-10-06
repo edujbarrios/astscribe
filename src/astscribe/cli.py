@@ -42,6 +42,11 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="fail if a notebook code cell is not valid Python instead of skipping it",
     )
+    parser.add_argument(
+        "--dot",
+        action="store_true",
+        help="render --report dependencies as Graphviz DOT",
+    )
     return parser
 
 
@@ -50,6 +55,8 @@ def _render_notebook(args: argparse.Namespace) -> str:
         args.path,
         skip_invalid_python=not args.strict,
     )
+    if args.dot and args.report != "dependencies":
+        raise ValueError("--dot is only supported with --report dependencies")
     if args.report == "methodology":
         return notebook.render_methodology(include_evidence=args.evidence)
     if args.report == "pipeline":
@@ -57,7 +64,7 @@ def _render_notebook(args: argparse.Namespace) -> str:
     if args.report == "techniques":
         return notebook.render_techniques()
     if args.report == "dependencies":
-        return notebook.render_dependency_graph()
+        return notebook.dependency_dot() if args.dot else notebook.render_dependency_graph()
     if args.report == "diagnostics":
         return notebook.render_diagnostics()
     if args.cell is None:
@@ -70,7 +77,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        if args.path.suffix.lower() == ".ipynb":
+        is_notebook = args.path.suffix.lower() == ".ipynb"
+        if args.dot and not is_notebook:
+            raise ValueError("--dot is only supported with notebook --report dependencies")
+        if is_notebook:
             output = _render_notebook(args)
         else:
             source = sys.stdin.read() if str(args.path) == "-" else args.path.read_text(encoding="utf-8")

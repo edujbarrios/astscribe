@@ -113,6 +113,7 @@ The current graph intentionally avoids several common false dependencies:
 - comprehension targets are treated as comprehension-local;
 - function bodies are not considered executed merely because a function is defined;
 - function default expressions are analyzed because they are evaluated at definition time;
+- class bodies are analyzed because they execute when the class is defined, while class-local bindings do not become notebook globals;
 - attribute or subscript assignment does not create a new notebook-global symbol, although its base/index expressions can be read;
 - `del name` removes that name as a future static producer.
 
@@ -130,7 +131,7 @@ Function bodies are not traversed as immediate execution dependencies. Reference
 
 Expressions evaluated while defining the function, such as defaults and decorators, can create dependencies.
 
-Class bases, class keywords, and decorators are analyzed. The class body itself is currently outside the dependency contract because class-body scope and execution require more detailed scope modeling.
+Class bases, class keywords, decorators, and class-body statements are analyzed. Reads from earlier notebook cells can therefore create dependency edges during class definition, while assignments, imports, and method names created inside the class remain class-local.
 
 ## DOT export
 
@@ -146,6 +147,12 @@ digraph ASTScribeNotebook {
 ```
 
 ASTScribe only creates the text. Rendering is optional and external.
+
+The same export is available from the CLI:
+
+```bash
+astscribe experiment.ipynb --report dependencies --dot
+```
 
 ## Explicit non-goals
 

@@ -59,3 +59,24 @@ def test_from_ipynb_rejects_invalid_notebook_shape() -> None:
 def test_from_ipynb_rejects_non_object_root() -> None:
     with pytest.raises(ValueError, match="top-level object"):
         NotebookAnalyzer.from_ipynb_data([])
+
+
+def test_from_ipynb_accepts_utf8_bom(tmp_path) -> None:
+    notebook = {"cells": [{"cell_type": "code", "source": "x = 1"}]}
+    path = tmp_path / "bom.ipynb"
+    path.write_bytes(b"\xef\xbb\xbf" + json.dumps(notebook).encode("utf-8"))
+
+    analyzer = NotebookAnalyzer.from_ipynb(path)
+
+    assert analyzer.cell_count == 1
+    assert analyzer.cell_indices == (0,)
+
+
+def test_from_ipynb_does_not_stringify_invalid_source_list_items() -> None:
+    notebook = {"cells": [{"cell_type": "code", "source": ["x = ", 1]}]}
+
+    analyzer = NotebookAnalyzer.from_ipynb_data(notebook)
+
+    assert analyzer.cell_count == 0
+    assert analyzer.skipped_cells[0].index == 0
+    assert "unsupported source representation" in analyzer.skipped_cells[0].reason

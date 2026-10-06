@@ -79,3 +79,33 @@ def test_cli_requires_cell_for_impact_report(tmp_path: Path) -> None:
 
     with pytest.raises(SystemExit, match="2"):
         main([str(notebook), "--report", "impact"])
+
+
+def test_cli_exports_dependency_graph_as_dot(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    notebook = tmp_path / "dependencies.ipynb"
+    notebook.write_text(
+        json.dumps(
+            {
+                "cells": [
+                    {"cell_type": "code", "source": "x = 1"},
+                    {"cell_type": "code", "source": "y = x + 1"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert main([str(notebook), "--report", "dependencies", "--dot"]) == 0
+    output = capsys.readouterr().out
+    assert output.startswith("digraph ASTScribeNotebook")
+    assert 'c0 -> c1 [label="x"]' in output
+
+
+def test_cli_rejects_dot_for_non_dependency_report(tmp_path: Path) -> None:
+    notebook = tmp_path / "experiment.ipynb"
+    notebook.write_text('{"cells": []}', encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="2"):
+        main([str(notebook), "--report", "diagnostics", "--dot"])

@@ -66,7 +66,7 @@ class NotebookAnalyzer:
         """Load code cells from a Jupyter ``.ipynb`` file using only the standard library."""
 
         notebook_path = Path(path)
-        with notebook_path.open("r", encoding="utf-8") as handle:
+        with notebook_path.open("r", encoding="utf-8-sig") as handle:
             data = json.load(handle)
         return cls.from_ipynb_data(data, skip_invalid_python=skip_invalid_python)
 
@@ -92,8 +92,10 @@ class NotebookAnalyzer:
                 continue
 
             raw_source = cell.get("source", "")
-            if isinstance(raw_source, list):
-                source = "".join(str(part) for part in raw_source)
+            if isinstance(raw_source, list) and all(
+                isinstance(part, str) for part in raw_source
+            ):
+                source = "".join(raw_source)
             elif isinstance(raw_source, str):
                 source = raw_source
             else:
