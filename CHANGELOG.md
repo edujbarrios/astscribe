@@ -5,7 +5,7 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
-## [0.8.0] - Unreleased
+## [0.8.0] - 2026-10-06
 
 ### Added
 
@@ -22,6 +22,7 @@ published to PyPI.
 - Package metadata now uses `astscribe.__version__` as its single version source.
 - CI validates both wheel and source distributions with Twine before release.
 - Distribution CI installs the built wheel and exercises its command-line entry point.
+- Successful PyPI publication creates the matching GitHub Release automatically.
 
 ## [0.7.0] - 2026-10-02
 

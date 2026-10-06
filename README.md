@@ -41,29 +41,34 @@ ASTScribe deliberately favors a smaller number of auditable semantic rules over 
 
 ## Installation
 
-Install the latest development version directly from the repository:
+Install ASTScribe from PyPI:
 
 ```bash
-git clone https://github.com/edujbarrios/astscribe.git
-cd astscribe
-pip install -e .
-```
-
-For development:
-
-```bash
-pip install -e ".[dev]"
+python -m pip install astscribe
 ```
 
 For optional IPython/Jupyter integration:
 
 ```bash
-pip install -e ".[ipython]"
+python -m pip install "astscribe[ipython]"
 ```
 
-The first public PyPI release is currently being prepared. Release maintainers can
-follow the [release checklist](https://github.com/edujbarrios/astscribe/blob/main/docs/releasing.md),
-including a TestPyPI rehearsal.
+To work on the latest development version:
+
+```bash
+git clone https://github.com/edujbarrios/astscribe.git
+cd astscribe
+python -m pip install -e ".[dev]"
+```
+
+Verify the installation with:
+
+```bash
+astscribe --version
+```
+
+Release maintainers can follow the
+[release checklist](https://github.com/edujbarrios/astscribe/blob/main/docs/releasing.md).
 
 ## Command Line
 

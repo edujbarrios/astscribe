@@ -49,7 +49,8 @@ the name in advance.
    ```
 
 5. Approve the `pypi` environment deployment in GitHub Actions.
-6. Verify the project page, installation, CLI, and import from a fresh environment.
+6. Confirm that the workflow created the matching GitHub Release.
+7. Verify the project page, installation, CLI, and import from a fresh environment.
 
 The production workflow rejects a tag that does not match the package version, builds
 the wheel and source distribution once, validates both with Twine, and publishes those
