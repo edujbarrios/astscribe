@@ -209,3 +209,51 @@ def test_cli_rejects_json_and_dot_together(tmp_path: Path) -> None:
 
     with pytest.raises(SystemExit, match="2"):
         main([str(notebook), "--report", "dependencies", "--json", "--dot"])
+
+
+def test_cli_fail_on_warning_returns_one_after_rendering_diagnostics(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    notebook = tmp_path / "warning.ipynb"
+    notebook.write_text(
+        json.dumps(
+            {
+                "cells": [
+                    {"cell_type": "code", "source": "result = future + 1"},
+                    {"cell_type": "code", "source": "future = 41"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert main([str(notebook), "--report", "diagnostics", "--fail-on-warning"]) == 1
+    assert "dependency.forward_reference" in capsys.readouterr().out
+
+
+def test_cli_fail_on_warning_returns_zero_for_clean_notebook(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    notebook = tmp_path / "clean.ipynb"
+    notebook.write_text(
+        json.dumps(
+            {
+                "cells": [
+                    {"cell_type": "code", "source": "x = 1"},
+                    {"cell_type": "code", "source": "y = x + 1"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert main([str(notebook), "--report", "diagnostics", "--fail-on-warning"]) == 0
+    assert "No supported notebook dependency diagnostics" in capsys.readouterr().out
+
+
+def test_cli_rejects_fail_on_warning_for_python_source(tmp_path: Path) -> None:
+    source = tmp_path / "script.py"
+    source.write_text("x = 1\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="2"):
+        main([str(source), "--fail-on-warning"])
