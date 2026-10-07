@@ -52,6 +52,11 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="fail if a notebook code cell is not valid Python instead of skipping it",
     )
+    parser.add_argument(
+        "--fail-on-warning",
+        action="store_true",
+        help="exit with status 1 if notebook dependency diagnostics contain warnings",
+    )
     output_group = parser.add_mutually_exclusive_group()
     output_group.add_argument(
         "--dot",
@@ -84,11 +89,7 @@ def _notebook_payload(notebook: NotebookAnalyzer, args: argparse.Namespace) -> A
     return notebook.impact(args.cell).to_dict()
 
 
-def _render_notebook(args: argparse.Namespace) -> str:
-    notebook = NotebookAnalyzer.from_ipynb(
-        args.path,
-        skip_invalid_python=not args.strict,
-    )
+def _render_notebook(notebook: NotebookAnalyzer, args: argparse.Namespace) -> str:
     if args.dot and args.report != "dependencies":
         raise ValueError("--dot is only supported with --report dependencies")
     if args.json:
@@ -118,8 +119,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         is_notebook = args.path.suffix.lower() == ".ipynb"
         if args.dot and not is_notebook:
             raise ValueError("--dot is only supported with notebook --report dependencies")
+        if args.fail_on_warning and not is_notebook:
+            raise ValueError("--fail-on-warning is only supported for notebooks")
+        exit_code = 0
         if is_notebook:
-            output = _render_notebook(args)
+            notebook = NotebookAnalyzer.from_ipynb(
+                args.path,
+                skip_invalid_python=not args.strict,
+            )
+            output = _render_notebook(notebook, args)
+            if args.fail_on_warning and any(
+                item.severity == "warning" for item in notebook.diagnostics().items
+            ):
+                exit_code = 1
         else:
             source = sys.stdin.read() if str(args.path) == "-" else args.path.read_text(encoding="utf-8")
             if args.json:
@@ -132,4 +144,4 @@ def main(argv: Sequence[str] | None = None) -> int:
     sys.stdout.write(output)
     if output and not output.endswith("\n"):
         sys.stdout.write("\n")
-    return 0
+    return exit_code
