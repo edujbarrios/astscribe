@@ -154,7 +154,7 @@ def build_symbol_table(
                 table.constructors[name] = imports.resolve_dotted(called)
                 table.constructor_arguments[name] = _keyword_values(value, table)
                 table.constructor_origins[name] = SymbolOrigin(
-                    source=ast.get_source_segment(source, value) or "",
+                    source=(ast.get_source_segment(source, value) or "") if source else "",
                     line_start=getattr(value, "lineno", None),
                     line_end=getattr(value, "end_lineno", getattr(value, "lineno", None)),
                     cell=cell,
