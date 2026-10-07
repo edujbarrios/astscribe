@@ -50,7 +50,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="fail if a notebook code cell is not valid Python instead of skipping it",
+        help="fail instead of skipping invalid Python or unsupported notebook code cells",
     )
     parser.add_argument(
         "--fail-on-warning",

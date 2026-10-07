@@ -18,9 +18,9 @@ from astscribe.methodology import MethodologyReport, build_methodology_report
 from astscribe.parser import (
     ImportTable,
     SymbolTable,
-    build_import_table,
     build_symbol_table,
     parse_source,
+    update_import_table,
 )
 from astscribe.pipeline import ExperimentPipeline, build_experiment_pipeline
 from astscribe.sir import AnalysisResult
@@ -100,9 +100,10 @@ class NotebookAnalyzer:
             elif isinstance(raw_source, str):
                 source = raw_source
             else:
-                analyzer._skipped_cells.append(
-                    SkippedCell(notebook_index, "code cell has an unsupported source representation")
-                )
+                reason = "code cell has an unsupported source representation"
+                if not skip_invalid_python:
+                    raise ValueError(f"Invalid notebook code cell {notebook_index}: {reason}.")
+                analyzer._skipped_cells.append(SkippedCell(notebook_index, reason))
                 continue
 
             if not source.strip():
@@ -122,17 +123,18 @@ class NotebookAnalyzer:
         context_index = len(self._cells) if cell_index is None else cell_index
         parsed = parse_source(source, cell=context_index)
 
-        local_imports = build_import_table(parsed.tree)
-        self._imports.aliases.update(local_imports.aliases)
-        self._symbols = build_symbol_table(
+        imports = update_import_table(parsed.tree, base=self._imports)
+        symbols = build_symbol_table(
             parsed.tree,
-            self._imports,
+            imports,
             base=self._symbols,
             source=source,
             cell=context_index,
         )
 
-        result = _analyze_parsed(parsed, self._imports, self._symbols)
+        result = _analyze_parsed(parsed, imports, symbols)
+        self._imports = imports
+        self._symbols = symbols
         self._cells.append(source)
         self._cell_indices.append(context_index)
         self._results.append(result)

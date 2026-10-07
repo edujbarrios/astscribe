@@ -4,6 +4,7 @@ import ast
 from dataclasses import dataclass, field
 from typing import Any
 
+from .bindings import collect_binding_effects
 from .imports import ImportTable
 
 _LITERAL_TYPES = (str, int, float, bool, type(None))
@@ -82,6 +83,20 @@ def _keyword_values(call: ast.Call, table: SymbolTable) -> dict[str, Any]:
     return values
 
 
+def _forget_symbol(table: SymbolTable, name: str) -> None:
+    table.constants.pop(name, None)
+    table.constructors.pop(name, None)
+    table.constructor_arguments.pop(name, None)
+    table.constructor_origins.pop(name, None)
+
+
+def _clear_symbol_table(table: SymbolTable) -> None:
+    table.constants.clear()
+    table.constructors.clear()
+    table.constructor_arguments.clear()
+    table.constructor_origins.clear()
+
+
 def _is_fluent_self_assignment(name: str, value: ast.Call) -> bool:
     return (
         isinstance(value.func, ast.Attribute)
@@ -101,31 +116,29 @@ def build_symbol_table(
     table = base.copy() if base is not None else SymbolTable()
 
     for node in tree.body:
-        if not isinstance(node, ast.Assign | ast.AnnAssign):
-            continue
-
-        target: ast.AST | None
-        value: ast.AST | None
+        target: ast.AST | None = None
+        value: ast.AST | None = None
         if isinstance(node, ast.Assign) and len(node.targets) == 1:
             target, value = node.targets[0], node.value
-        else:
-            target = node.target if isinstance(node, ast.AnnAssign) else None
-            value = node.value if isinstance(node, ast.AnnAssign) else None
+        elif isinstance(node, ast.AnnAssign):
+            target, value = node.target, node.value
 
-        if not isinstance(target, ast.Name) or value is None:
+        name = target.id if isinstance(target, ast.Name) and value is not None else None
+        previous_context = table.constructor_context(name) if name is not None else None
+
+        effects = collect_binding_effects(node)
+        if effects.clears_all:
+            _clear_symbol_table(table)
+        for rebound in effects.names:
+            _forget_symbol(table, rebound)
+
+        if name is None or value is None:
             continue
 
-        name = target.id
-        previous_context = table.constructor_context(name)
         constant = table.resolve_constant(value)
         if constant is not None:
             table.constants[name] = constant
-            table.constructors.pop(name, None)
-            table.constructor_arguments.pop(name, None)
-            table.constructor_origins.pop(name, None)
             continue
-
-        table.constants.pop(name, None)
 
         if isinstance(value, ast.Call):
             if _is_fluent_self_assignment(name, value) and previous_context is not None:
@@ -141,15 +154,10 @@ def build_symbol_table(
                 table.constructors[name] = imports.resolve_dotted(called)
                 table.constructor_arguments[name] = _keyword_values(value, table)
                 table.constructor_origins[name] = SymbolOrigin(
-                    source=ast.get_source_segment(source, value) or "",
+                    source=(ast.get_source_segment(source, value) or "") if source else "",
                     line_start=getattr(value, "lineno", None),
                     line_end=getattr(value, "end_lineno", getattr(value, "lineno", None)),
                     cell=cell,
                 )
-                continue
-
-        table.constructors.pop(name, None)
-        table.constructor_arguments.pop(name, None)
-        table.constructor_origins.pop(name, None)
 
     return table
