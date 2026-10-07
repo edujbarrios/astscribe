@@ -44,7 +44,7 @@ def test_cell_magic_source_uses_prior_history_context() -> None:
         style="concise",
     )
 
-    assert "gradient tracking" in rendered.lower()
+    assert "pytorch inference" in rendered.lower()
 
 
 def test_line_magic_request_parsing_supports_cell_and_style() -> None:
