@@ -19,6 +19,10 @@ published to PyPI.
 - The README examples are shorter and focus on Python, live notebook usage, notebook files, and the CLI.
 - The README badge set has doubled from five to ten badges.
 
+### Release
+
+- Prepared ASTScribe 0.9.0 for production publication to PyPI and GitHub Releases.
+
 ## [0.8.8] - 2026-10-07
 
 ### Changed
