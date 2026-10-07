@@ -5,6 +5,21 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.8.8] - 2026-10-07
+
+### Changed
+
+- Notebook context propagation now treats module-scope rebindings conservatively, invalidating stale import aliases, constants, and constructor metadata when names are reassigned, deleted, shadowed by definitions, or made ambiguous by control flow.
+- Persistent notebook imports are now tracked from module scope instead of leaking imports declared inside functions or classes into later cells.
+- Strict notebook loading now rejects unsupported code-cell source representations instead of silently skipping them.
+
+### Fixed
+
+- Reassigning an import alias such as `torch as t` could leave the old framework mapping active in later cells and produce false PyTorch claims.
+- Imports declared only inside a function could incorrectly leak into subsequent notebook cells.
+- Deleted or rebound constructor variables could retain stale optimizer/loss metadata and cause later calls to be misclassified.
+- Loop and other runtime bindings could leave stale literal constants available to later semantic analysis.
+
 ## [0.8.7] - 2026-10-07
 
 ### Added
