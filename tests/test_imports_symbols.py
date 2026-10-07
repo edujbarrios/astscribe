@@ -13,3 +13,20 @@ def test_static_constant_resolution() -> None:
     imports = build_import_table(parsed.tree)
     symbols = build_symbol_table(parsed.tree, imports)
     assert symbols.constants["learning_rate"] == 2e-5
+
+
+
+def test_symbol_table_clears_constant_on_function_rebinding() -> None:
+    parsed = parse_source("seed = 7\ndef seed():\n    return 9")
+    imports = build_import_table(parsed.tree)
+    symbols = build_symbol_table(parsed.tree, imports)
+
+    assert "seed" not in symbols.constants
+
+
+def test_symbol_table_clears_constructor_on_delete() -> None:
+    parsed = parse_source("from torch.optim import AdamW\nopt = AdamW(params)\ndel opt")
+    imports = build_import_table(parsed.tree)
+    symbols = build_symbol_table(parsed.tree, imports)
+
+    assert symbols.resolve_constructor("opt") is None
