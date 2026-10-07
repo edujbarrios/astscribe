@@ -80,3 +80,11 @@ def test_from_ipynb_does_not_stringify_invalid_source_list_items() -> None:
     assert analyzer.cell_count == 0
     assert analyzer.skipped_cells[0].index == 0
     assert "unsupported source representation" in analyzer.skipped_cells[0].reason
+
+
+
+def test_strict_ipynb_rejects_unsupported_code_source_representation() -> None:
+    notebook = {"cells": [{"cell_type": "code", "source": ["x = ", 1]}]}
+
+    with pytest.raises(ValueError, match="unsupported source representation"):
+        NotebookAnalyzer.from_ipynb_data(notebook, skip_invalid_python=False)
