@@ -5,6 +5,23 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.8.7] - 2026-10-07
+
+### Added
+
+- A `--fail-on-warning` CLI option for notebooks that preserves the requested report while returning exit status 1 when dependency diagnostics contain warnings, making ASTScribe easier to gate in CI.
+- Static dependency support for Python structural pattern matching, including capture bindings, mapping/rest bindings, class patterns, OR patterns, guards, and value-pattern reads.
+
+### Changed
+
+- Dependency analysis now follows Python's assignment-expression scoping rules inside comprehensions, so `:=` targets correctly bind in the containing scope.
+- Exception-handler aliases are now modeled as temporary bindings and cleared after the handler, matching Python's runtime lifetime rules.
+
+### Fixed
+
+- Notebook cells that consumed a name assigned with `:=` inside a comprehension could previously miss the producer edge.
+- Pattern-captured names in `match/case` guards, bodies, and later cells could previously be reported as unresolved.
+
 ## [0.8.6] - 2026-10-06
 
 ### Added

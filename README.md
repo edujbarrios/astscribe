@@ -102,11 +102,16 @@ printf 'model.eval()\n' | astscribe - --style concise
 
 # Fail if a notebook contains a code cell that is not valid Python
 astscribe experiment.ipynb --report diagnostics --strict
+
+# Return exit status 1 when dependency diagnostics contain warnings
+astscribe experiment.ipynb --report diagnostics --fail-on-warning
 ```
 
 The same CLI is available as `python -m astscribe`. Use `--json` with Python source
 or any notebook report to emit the underlying structured analysis instead of rendered
 text. JSON output is deterministic and uses only the Python standard library.
+For CI validation, `--fail-on-warning` preserves the selected notebook output while
+returning status 1 when dependency diagnostics contain warnings.
 
 ## Supported semantics
 

@@ -151,6 +151,19 @@ class _EventCollector(ast.NodeVisitor):
         # does not create a new notebook-global symbol.
         self.visit(node)
 
+    def _write_named_expr_target(self, node: ast.Name) -> None:
+        if self._scope_kinds and self._scope_kinds[-1] == "comprehension":
+            # Assignment expressions inside comprehensions bind in the nearest
+            # containing non-comprehension scope (PEP 572), not in the
+            # comprehension's implicit nested scope.
+            for index in range(len(self._scope_kinds) - 2, -1, -1):
+                if self._scope_kinds[index] != "comprehension":
+                    self._locals[index].add(node.id)
+                    return
+            self._emit("write", node.id, node)
+            return
+        self._write_target(node)
+
     def _delete_target(self, node: ast.AST) -> None:
         if isinstance(node, ast.Name):
             if self._locals:
@@ -221,7 +234,10 @@ class _EventCollector(ast.NodeVisitor):
 
     def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
         self.visit(node.value)
-        self._write_target(node.target)
+        if isinstance(node.target, ast.Name):
+            self._write_named_expr_target(node.target)
+        else:
+            self._write_target(node.target)
 
     def visit_Delete(self, node: ast.Delete) -> None:
         for target in node.targets:
@@ -248,6 +264,69 @@ class _EventCollector(ast.NodeVisitor):
         for default in (*node.args.defaults, *node.args.kw_defaults):
             if default is not None:
                 self.visit(default)
+
+    def visit_ExceptHandler(self, node: ast.ExceptHandler) -> None:
+        if node.type is not None:
+            self.visit(node.type)
+        if node.name is not None:
+            self._define_name(node.name, node)
+        for statement in node.body:
+            self.visit(statement)
+        if node.name is not None:
+            # Python clears the exception target after the handler to break
+            # reference cycles, so it must not remain a future producer.
+            if self._locals:
+                self._locals[-1].discard(node.name)
+            else:
+                self._emit("delete", node.name, node)
+
+    def _visit_match_pattern(self, pattern: ast.pattern) -> None:
+        if isinstance(pattern, ast.MatchValue):
+            self.visit(pattern.value)
+            return
+        if isinstance(pattern, ast.MatchSingleton):
+            return
+        if isinstance(pattern, ast.MatchSequence):
+            for child in pattern.patterns:
+                self._visit_match_pattern(child)
+            return
+        if isinstance(pattern, ast.MatchStar):
+            if pattern.name is not None:
+                self._define_name(pattern.name, pattern)
+            return
+        if isinstance(pattern, ast.MatchMapping):
+            for key in pattern.keys:
+                self.visit(key)
+            for child in pattern.patterns:
+                self._visit_match_pattern(child)
+            if pattern.rest is not None:
+                self._define_name(pattern.rest, pattern)
+            return
+        if isinstance(pattern, ast.MatchClass):
+            self.visit(pattern.cls)
+            for child in (*pattern.patterns, *pattern.kwd_patterns):
+                self._visit_match_pattern(child)
+            return
+        if isinstance(pattern, ast.MatchAs):
+            if pattern.pattern is not None:
+                self._visit_match_pattern(pattern.pattern)
+            if pattern.name is not None:
+                self._define_name(pattern.name, pattern)
+            return
+        if isinstance(pattern, ast.MatchOr):
+            for child in pattern.patterns:
+                self._visit_match_pattern(child)
+            return
+        self.generic_visit(pattern)
+
+    def visit_Match(self, node: ast.Match) -> None:
+        self.visit(node.subject)
+        for case in node.cases:
+            self._visit_match_pattern(case.pattern)
+            if case.guard is not None:
+                self.visit(case.guard)
+            for statement in case.body:
+                self.visit(statement)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         for decorator in node.decorator_list:

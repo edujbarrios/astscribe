@@ -251,3 +251,71 @@ def test_class_comprehension_body_still_skips_class_scope() -> None:
     assert [(edge.producer_cell, edge.consumer_cell, edge.symbols) for edge in graph.edges] == [
         (0, 1, ("value",)),
     ]
+
+
+def test_comprehension_assignment_expression_binds_containing_scope() -> None:
+    notebook = NotebookAnalyzer.from_cells(
+        [
+            "values = [1, 2, 3]",
+            "doubled = [last := item * 2 for item in values]",
+            "result = last",
+        ]
+    )
+
+    graph = notebook.dependency_graph()
+
+    assert [(edge.producer_cell, edge.consumer_cell, edge.symbols) for edge in graph.edges] == [
+        (0, 1, ("values",)),
+        (1, 2, ("last",)),
+    ]
+    assert "last" in graph.nodes[1].defines
+    assert "item" not in graph.nodes[1].defines
+
+
+def test_match_capture_is_available_to_guard_body_and_later_cells() -> None:
+    notebook = NotebookAnalyzer.from_cells(
+        [
+            'payload = {"value": 3}',
+            'match payload:\n    case {"value": value} if value > 0:\n        result = value',
+            "after = value",
+        ]
+    )
+
+    graph = notebook.dependency_graph()
+
+    assert [(edge.producer_cell, edge.consumer_cell, edge.symbols) for edge in graph.edges] == [
+        (0, 1, ("payload",)),
+        (1, 2, ("value",)),
+    ]
+    assert set(graph.nodes[1].defines) == {"result", "value"}
+    assert "value" not in graph.nodes[1].unresolved_reads
+
+
+def test_match_value_pattern_reads_outer_symbol() -> None:
+    notebook = NotebookAnalyzer.from_cells(
+        [
+            "Color = make_color_type()\nitem = get_item()",
+            'match item:\n    case Color.RED:\n        result = "red"',
+        ]
+    )
+
+    graph = notebook.dependency_graph()
+
+    assert [(edge.producer_cell, edge.consumer_cell, edge.symbols) for edge in graph.edges] == [
+        (0, 1, ("Color", "item")),
+    ]
+
+
+def test_exception_alias_is_scoped_to_handler_and_cleared_afterwards() -> None:
+    notebook = NotebookAnalyzer.from_cells(
+        [
+            "try:\n    risky()\nexcept Exception as exc:\n    message = str(exc)",
+            "after = exc",
+        ]
+    )
+
+    graph = notebook.dependency_graph()
+
+    assert "exc" not in graph.nodes[0].unresolved_reads
+    assert graph.edges == ()
+    assert graph.nodes[1].unresolved_reads == ("exc",)
