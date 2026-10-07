@@ -72,3 +72,58 @@ def test_context_flows_forward_only() -> None:
     analyzer.add_cell("from torch.optim import AdamW\noptimizer = AdamW(model.parameters())")
 
     assert not any(claim.rule == "context.optimizer_binding" for claim in first.claims)
+
+
+
+def test_shadowed_import_alias_does_not_leak_framework_semantics() -> None:
+    analyzer = NotebookAnalyzer()
+    analyzer.add_cell("import torch as t")
+    analyzer.add_cell("t = custom_backend")
+    result = analyzer.add_cell("with t.no_grad():\n    output = compute()")
+
+    assert not any(operation.kind == "gradient_tracking_disabled" for operation in result.operations)
+
+
+def test_import_inside_function_does_not_leak_to_later_cells() -> None:
+    analyzer = NotebookAnalyzer()
+    analyzer.add_cell("def helper():\n    import torch as t\n    return t.tensor([1])")
+    result = analyzer.add_cell("with t.no_grad():\n    output = compute()")
+
+    assert not any(operation.kind == "gradient_tracking_disabled" for operation in result.operations)
+
+
+def test_reimported_alias_restores_framework_context() -> None:
+    analyzer = NotebookAnalyzer()
+    analyzer.add_cell("import torch as t")
+    analyzer.add_cell("t = custom_backend")
+    analyzer.add_cell("import torch as t")
+    result = analyzer.add_cell("with t.no_grad():\n    output = compute()")
+
+    assert any(operation.kind == "gradient_tracking_disabled" for operation in result.operations)
+
+
+def test_deleted_constructor_context_is_not_reused() -> None:
+    analyzer = NotebookAnalyzer()
+    analyzer.add_cell("from torch.optim import AdamW\nopt = AdamW(model.parameters())")
+    analyzer.add_cell("del opt")
+    result = analyzer.add_cell("opt.step()")
+
+    assert not any(operation.kind == "parameter_update" for operation in result.operations)
+
+
+def test_function_redefinition_clears_constructor_context() -> None:
+    analyzer = NotebookAnalyzer()
+    analyzer.add_cell("from torch import nn\nloss_fn = nn.CrossEntropyLoss()")
+    analyzer.add_cell("def loss_fn(outputs, targets):\n    return custom_loss(outputs, targets)")
+    result = analyzer.add_cell("loss = loss_fn(outputs, targets)")
+
+    assert not any(operation.kind == "loss_computation" for operation in result.operations)
+
+
+def test_loop_binding_invalidates_stale_constant_context() -> None:
+    analyzer = NotebookAnalyzer()
+    analyzer.add_cell("import torch\nepochs = 5")
+    analyzer.add_cell("for epochs in schedule:\n    pass")
+    result = analyzer.add_cell("for epoch in range(epochs):\n    train_one_epoch()")
+
+    assert not any(operation.kind == "epoch_loop" for operation in result.operations)
