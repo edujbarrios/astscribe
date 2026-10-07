@@ -5,6 +5,20 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.9.0] - 2026-10-07
+
+### Added
+
+- A `%scribe N` IPython line magic that explains a specific `In[N]` entry using forward-only static context reconstructed from earlier Python inputs.
+- Context-aware `%%scribe` analysis for the cell being written, while preserving the existing short style syntax such as `%%scribe concise`.
+- A reusable `astscribe.ipython.explain_history_cell()` helper for deterministic history-cell explanations without executing notebook code.
+
+### Changed
+
+- IPython-only inputs such as magics and shell escapes now form conservative context boundaries so unknown runtime side effects cannot leak stale bindings into later explanations.
+- The README examples are shorter and focus on Python, live notebook usage, notebook files, and the CLI.
+- The README badge set has doubled from five to ten badges.
+
 ## [0.8.8] - 2026-10-07
 
 ### Changed
