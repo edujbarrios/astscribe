@@ -19,6 +19,7 @@ published to PyPI.
 - Imports declared only inside a function could incorrectly leak into subsequent notebook cells.
 - Deleted or rebound constructor variables could retain stale optimizer/loss metadata and cause later calls to be misclassified.
 - Loop and other runtime bindings could leave stale literal constants available to later semantic analysis.
+- Building a symbol table for a constructor assignment without passing the original source text could raise `IndexError` when the call appeared after the first line.
 
 ## [0.8.7] - 2026-10-07
 
