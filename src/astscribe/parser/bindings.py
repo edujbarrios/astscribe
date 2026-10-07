@@ -41,7 +41,12 @@ class _BindingCollector(ast.NodeVisitor):
             self.visit(node.returns)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        self.visit_FunctionDef(node)
+        self.names.add(node.name)
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        self.visit(node.args)
+        if node.returns is not None:
+            self.visit(node.returns)
 
     def visit_Lambda(self, node: ast.Lambda) -> None:
         self.visit(node.args)
