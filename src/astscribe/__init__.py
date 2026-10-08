@@ -12,7 +12,7 @@ from .notebook import NotebookAnalyzer, SkippedCell
 from .pipeline import ExperimentPipeline, PipelineStage
 from .sir import AnalysisResult
 
-__version__ = "0.9.1"
+__version__ = "0.10.0"
 
 __all__ = [
     "AnalysisResult",
