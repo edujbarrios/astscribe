@@ -257,3 +257,105 @@ def test_empty_notebook_overview_explains_missing_evidence() -> None:
     overview = NotebookAnalyzer.from_cells([]).render_overview()
     assert "No supported ML methodology was identified." in overview
     assert "No evidence-backed experiment pipeline could be reconstructed." in overview
+
+
+def test_unsupported_magic_invalidates_previous_import_aliases() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data({
+        "cells": [
+            {"cell_type": "code", "source": "import torch as t"},
+            {"cell_type": "code", "source": "%run change_environment.py"},
+            {"cell_type": "code", "source":
+                "with t.no_grad():\n    prediction = model(inputs)"},
+        ]
+    })
+    assert analyzer.cell_indices == (0, 2)
+    assert not any(
+        claim.rule == "pytorch.no_grad" for claim in analyzer.results[1].claims
+    )
+
+
+def test_unsupported_magic_breaks_cross_cell_dependencies() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data({
+        "cells": [
+            {"cell_type": "code", "source": "features = load_data()"},
+            {"cell_type": "code", "source": "%run mutate_globals.py"},
+            {"cell_type": "code", "source": "predictions = model(features)"},
+        ]
+    })
+    assert analyzer.dependency_graph().edges == ()
+    assert "features" in analyzer.dependency_graph().nodes[1].unresolved_reads
+    assert any(
+        d.symbol == "features" and d.code == "dependency.unresolved_symbol"
+        for d in analyzer.diagnostics().items
+    )
+
+
+def test_python_context_after_barrier_can_be_reestablished() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data({
+        "cells": [
+            {"cell_type": "code", "source": "import torch as t"},
+            {"cell_type": "code", "source": "!pip install torch"},
+            {"cell_type": "code", "source": "import torch as t"},
+            {"cell_type": "code", "source":
+                "with t.no_grad():\n    prediction = model(inputs)"},
+        ]
+    })
+    assert any(
+        claim.rule == "pytorch.no_grad" for claim in analyzer.results[-1].claims
+    )
+    assert any(
+        edge.producer_cell == 2
+        and edge.consumer_cell == 3
+        and "t" in edge.symbols
+        for edge in analyzer.dependency_graph().edges
+    )
+    assert not any(
+        edge.producer_cell == 0
+        for edge in analyzer.dependency_graph().edges
+    )
+
+
+def test_markdown_and_empty_cells_do_not_break_known_context() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data({
+        "cells": [
+            {"cell_type": "code", "source": "import torch as t\nfeatures = load_data()"},
+            {"cell_type": "markdown", "source": "## Analyze"},
+            {"cell_type": "code", "source": ""},
+            {"cell_type": "code", "source":
+                "with t.no_grad():\n    prediction = model(features)"},
+        ]
+    })
+    assert any(
+        claim.rule == "pytorch.no_grad" for claim in analyzer.results[-1].claims
+    )
+    assert any(
+        edge.producer_cell == 0 and edge.consumer_cell == 3
+        for edge in analyzer.dependency_graph().edges
+    )
+
+
+def test_unhashable_cell_type_is_safely_skipped_or_rejected() -> None:
+    document = {"cells": [
+        {"cell_type": "code", "source": "x = 1"},
+        {"cell_type": ["code"], "source": "could_be_side_effectful()"},
+        {"cell_type": "code", "source": "value = x"},
+    ]}
+    analyzer = NotebookAnalyzer.from_ipynb_data(document)
+    assert analyzer.cell_indices == (0, 2)
+    assert analyzer.skipped_cells[0].index == 1
+    assert analyzer.dependency_graph().edges == ()
+    with pytest.raises(ValueError, match="unsupported cell_type"):
+        NotebookAnalyzer.from_ipynb_data(document, skip_invalid_python=False)
+
+
+def test_skipped_trailing_cell_resets_incremental_analysis_context() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data({
+        "cells": [
+            {"cell_type": "code", "source": "import torch as t"},
+            {"cell_type": "code", "source": "%%bash\necho reconfigured"},
+        ]
+    })
+    result = analyzer.add_cell("with t.no_grad():\n    prediction = model(inputs)")
+    assert not any(claim.rule == "pytorch.no_grad" for claim in result.claims)
+    assert analyzer.cell_indices == (0, 2)
+    assert analyzer.dependency_graph().edges == ()
