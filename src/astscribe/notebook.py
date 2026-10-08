@@ -49,6 +49,7 @@ class NotebookAnalyzer:
     _cell_indices: list[int] = field(default_factory=list)
     _results: list[AnalysisResult] = field(default_factory=list)
     _skipped_cells: list[SkippedCell] = field(default_factory=list)
+    _next_cell_index: int = 0
 
     @classmethod
     def from_cells(cls, cells: list[str]) -> NotebookAnalyzer:
@@ -117,19 +118,21 @@ class NotebookAnalyzer:
                 reason = f"not valid Python for static AST analysis: {exc.msg}"
                 analyzer._skipped_cells.append(SkippedCell(notebook_index, reason))
 
+        # Keep the full notebook coordinate space, including trailing markdown,
+        # empty code, and syntax-skipped cells that have no AnalysisResult.
+        analyzer._next_cell_index = len(cells)
         return analyzer
 
     def add_cell(self, source: str, *, cell_index: int | None = None) -> AnalysisResult:
         if cell_index is None:
-            # Preserve original notebook coordinates after markdown or skipped cells.
-            context_index = self._cell_indices[-1] + 1 if self._cell_indices else 0
+            context_index = self._next_cell_index
         else:
             if type(cell_index) is not int or cell_index < 0:
                 raise ValueError("cell_index must be a non-negative integer.")
             context_index = cell_index
 
-        if self._cell_indices and context_index <= self._cell_indices[-1]:
-            raise ValueError("cell_index must be greater than the last analyzed cell index.")
+        if context_index < self._next_cell_index:
+            raise ValueError("cell_index must not reuse an existing notebook cell index.")
 
         parsed = parse_source(source, cell=context_index)
 
@@ -148,6 +151,7 @@ class NotebookAnalyzer:
         self._cells.append(source)
         self._cell_indices.append(context_index)
         self._results.append(result)
+        self._next_cell_index = context_index + 1
         return result
 
     def analyze_cell(self, index: int) -> AnalysisResult:
