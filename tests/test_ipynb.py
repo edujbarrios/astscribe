@@ -88,3 +88,46 @@ def test_strict_ipynb_rejects_unsupported_code_source_representation() -> None:
 
     with pytest.raises(ValueError, match="unsupported source representation"):
         NotebookAnalyzer.from_ipynb_data(notebook, skip_invalid_python=False)
+
+def test_append_after_ipynb_uses_original_coordinate_space() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data({
+        "cells": [
+            {"cell_type": "markdown", "source": "# Experiment"},
+            {"cell_type": "code", "source": "x = 1"},
+            {"cell_type": "code", "source": "%timeit x"},
+            {"cell_type": "code", "source": "y = x + 1"},
+        ]
+    })
+
+    analyzer.add_cell("z = y + 1")
+
+    assert analyzer.cell_indices == (1, 3, 4)
+    assert [(e.producer_cell, e.consumer_cell) for e in analyzer.dependency_graph().edges] == [
+        (1, 3),
+        (3, 4),
+    ]
+    assert analyzer.impact(1).affected_cells == (3, 4)
+
+
+def test_explicit_cell_indices_must_be_unique_and_increasing() -> None:
+    analyzer = NotebookAnalyzer()
+    analyzer.add_cell("x = 1", cell_index=5)
+
+    for invalid in (-1, True, 3, 5):
+        with pytest.raises(ValueError, match="cell_index"):
+            analyzer.add_cell("y = 2", cell_index=invalid)
+
+    assert analyzer.cell_indices == (5,)
+    analyzer.add_cell("y = x + 1")
+    assert analyzer.cell_indices == (5, 6)
+
+
+def test_rejected_cell_does_not_mutate_notebook_context() -> None:
+    analyzer = NotebookAnalyzer.from_cells(["x = 1"])
+
+    with pytest.raises(SyntaxError):
+        analyzer.add_cell("def broken(")
+
+    assert analyzer.cell_indices == (0,)
+    assert analyzer.add_cell("y = x + 1").source == "y = x + 1"
+    assert analyzer.cell_indices == (0, 1)
