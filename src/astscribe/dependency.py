@@ -225,12 +225,18 @@ class _EventCollector(ast.NodeVisitor):
             self.visit(node.target)
 
     def visit_AugAssign(self, node: ast.AugAssign) -> None:
-        if isinstance(node.target, ast.Name) and not self._is_local(node.target.id):
-            self._emit("read", node.target.id, node.target)
+        if isinstance(node.target, ast.Name):
+            # Augmented assignment reads the old value before rebinding it.
+            if not self._is_local(node.target.id):
+                self._emit("read", node.target.id, node.target)
+            self.visit(node.value)
+            self._write_target(node.target)
         else:
-            self.visit(node.target)
-        self.visit(node.value)
-        self._write_target(node.target)
+            # Attribute/subscript targets are evaluated once and do not bind
+            # notebook-global names. Visiting the target twice would duplicate
+            # reads of its base object and index expressions.
+            self._write_target(node.target)
+            self.visit(node.value)
 
     def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
         self.visit(node.value)
