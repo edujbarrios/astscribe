@@ -1,31 +1,38 @@
 # ASTScribe
 
-> Understand someone else's ML notebook without leaving Jupyter — evidence-backed, no LLM required.
+> Evidence-backed explanations of unfamiliar ML notebooks, directly inside Jupyter.
 
 [![PyPI](https://img.shields.io/pypi/v/astscribe?label=PyPI)](https://pypi.org/project/astscribe/)
 [![Python](https://img.shields.io/pypi/pyversions/astscribe)](https://pypi.org/project/astscribe/)
 [![CI](https://github.com/edujbarrios/astscribe/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/edujbarrios/astscribe/actions/workflows/tests.yml)
 [![Try it in Colab](https://img.shields.io/badge/Try%20it%20in-Colab-F9AB00?logo=googlecolab&logoColor=white)](https://colab.research.google.com/github/edujbarrios/astscribe/blob/main/examples/notebooks/quick_examples.ipynb)
 
-**Understand what a notebook does without leaving that notebook.**
-Someone shared a research notebook with you? Exploring an open-source project
-built with PyTorch, Transformers or other ML frameworks? ASTScribe explains the
-supported operations **right where you're reading them**, with source-linked
-evidence instead of guesses. Understand inference, training and the overall
-experiment before you try running unfamiliar code. You can also inspect cell
-dependencies, spot out-of-order definitions and see what edits may affect.
+**What does this notebook actually do — and what in the code supports that interpretation?**
 
-Use ASTScribe in Jupyter to explain individual cells or inspect the entire
-`.ipynb` with a single notebook overview. **No LLM or API key required.**
+A collaborator sends you an `.ipynb`. You discover a PyTorch experiment in an
+open-source repository. Before trying to reproduce its results, you need to
+understand its methods: **Which model is configured? Where are gradients
+computed? What is evaluated, and how do the cells depend on one another?**
 
-**Start hands-on:** [Run the interactive quick examples in Google Colab](https://colab.research.google.com/github/edujbarrios/astscribe/blob/main/examples/notebooks/quick_examples.ipynb).
-Open the notebook, choose **Runtime → Run all**, and explore each explanation
-alongside its source. It installs ASTScribe automatically if needed.
+**ASTScribe turns supported source-level operations into explanations you can
+inspect alongside the notebook itself.** It identifies training and inference
+patterns, reconstructs an evidence-backed experiment outline, and connects
+methodological claims to their **original cells and source lines**. Explore
+individual cells using Jupyter magics or inspect an entire notebook from its
+`.ipynb` file — without switching to a separate AI service.
 
-**Static analysis, not model execution.** ASTScribe never executes the ML code
-it explains: the walkthroughs below use Python source **strings**, so you don't
-need PyTorch, Transformers, datasets, a GPU, downloads or an API key just to
-try them.
+**Why this approach?** Scientific interpretation requires traceability.
+ASTScribe uses deterministic static analysis of recognized **PyTorch,
+Transformers, Datasets and PEFT** constructs. It does **not** execute the
+analyzed code, infer unobserved runtime behavior, or claim that an experiment
+produced particular results. Unknown code and skipped cells are reported;
+their possible effects are not silently treated as established facts.
+
+**Try the workflow yourself:** [Open the runnable examples in Google Colab](https://colab.research.google.com/github/edujbarrios/astscribe/blob/main/examples/notebooks/quick_examples.ipynb)
+and select **Runtime → Run all**. The notebook installs ASTScribe if needed.
+The source snippets are analyzed as strings, so you can examine the
+explanations **without downloading ML models, running training, using a GPU,
+or supplying an LLM API key**.
 
 ## Install
 
@@ -33,11 +40,14 @@ try them.
 python -m pip install astscribe
 ```
 
-## Understand a notebook someone sent you
+## First experiment: read an unfamiliar notebook
 
-Download or clone the project notebook (for example, `research.ipynb`). Then
-get a **whole-notebook overview**: detected experiment stages, evidence-backed
-methodology, dependency diagnostics and a list of cells ASTScribe had to skip.
+**Research question:** What methods and dataflow are *actually visible* in a
+notebook you received from a colleague or found in an open-source project?
+
+Download or clone `research.ipynb`, then ask ASTScribe for a **source-grounded
+overview**: experiment stages, methodology, dependency diagnostics and skipped
+cells. It does not execute any notebook cell.
 
 ```bash
 astscribe research.ipynb --report overview --evidence
@@ -50,19 +60,22 @@ To inspect a particular source cell even when there are Markdown gaps, call
 `notebook.explain_notebook_cell(7)` using its **original** `.ipynb` index.
 For the current notebook's executed input, use `%scribe 7 scientific`.
 
-ASTScribe **only reads and analyzes** the source: it will not run a stranger's
-training code, fetch model weights or execute notebook magics. It reports
-unrecognized/malformed cells instead of silently pretending they were analyzed.
+**Interpretation boundary:** ASTScribe cannot establish model accuracy, numerical
+results or hidden kernel state from static source. Unsupported code (including
+IPython magics) forms a conservative context boundary: later explanations and
+symbol dependencies do not reuse earlier bindings that the unknown code may
+have modified. Unknown or malformed cells appear in the report.
 
-## See what ASTScribe produces
+## From source code to scientific explanation
 
-**Start with the main feature: understand an unfamiliar notebook.**
-Each example is independent; you can copy its Python block into a script,
-Jupyter notebook or Colab. The expected output underneath is tested in CI.
+Each example asks a concrete question and shows ASTScribe's **actual output**.
+Copy any Python block into Jupyter, Colab or a script; the documented results
+are checked automatically by tests. No ML framework needs to be installed to
+analyze the strings below.
 
 ### 1. Explain ML code in plain language — right inside your notebook
 
-**Question:** Can I explain the inference procedure in a review or Methods section without guessing?
+**Research question:** Does this cell contain inference-specific execution semantics, and how can they be described without speculation?
 
 ```python
 from astscribe import explain
@@ -87,10 +100,12 @@ The model is explicitly configured in evaluation mode.
 A forward pass is performed by invoking the model on the supplied inputs.
 ```
 
-**Why it matters:** Explanations are based on supported source evidence, not claims about model accuracy or performance.
+**Interpretation:** Each statement is grounded in a recognized source operation.
+This is a description of the code, not a claim about predictive performance.
+
 ### 2. Audit a training step and trace each claim to code
 
-**Question:** Does this snippet actually do backpropagation and an optimizer update? Where?
+**Research question:** Which optimization steps are explicitly present, and what is the traceable source evidence?
 
 ```python
 from astscribe import analyze, explain
@@ -127,7 +142,7 @@ Evidence: line 8 (pytorch.optimizer_step)
 
 ### 3. Reconstruct an unfamiliar Hugging Face experiment
 
-**Question:** Which stages appear in this multi-cell ML workflow? Imports and constructors are represented as strings, so nothing is downloaded or trained.
+**Research question:** Which stages of an unfamiliar Hugging Face experiment are supported by the source? No dataset or model is downloaded.
 
 ```python
 from astscribe import NotebookAnalyzer
@@ -159,7 +174,7 @@ Training procedure
 
 ### 4. Detect cells that rely on later definitions
 
-**Question:** Could a notebook work only because someone ran its cells out of order?
+**Research question:** Are there source-order dependencies that may rely on a previous kernel session?
 
 ```python
 from astscribe import NotebookAnalyzer
@@ -183,7 +198,7 @@ Cell 0: raw_data defined later in cell 1
 
 ### 5. Find which results depend on a changed preprocessing cell
 
-**Question:** If you edit cell 1, which downstream results might be stale?
+**Research question:** Which downstream cells are statically dependent on a changed preprocessing step?
 
 ```python
 from astscribe import NotebookAnalyzer
@@ -210,7 +225,6 @@ Blast radius: 3
 ```
 
 **Why it matters:** ASTScribe follows static symbol dependencies, so it can estimate which cells need review without executing their code. This is a conservative impact estimate, not a Jupyter execution scheduler.
-
 
 ## Use it on your own notebook
 
@@ -270,7 +284,12 @@ Expected final line:
 Verified 4 executed example notebooks; all stored outputs match.
 ```
 
-## Scope and limits
+## Scope and limitations
+
+A scientific description should distinguish what the source **shows** from what
+would require **running an experiment**. ASTScribe does not measure accuracy,
+reproducibility or causal effects, and it cannot reconstruct hidden notebook
+execution order. Diagnostics are prompts for review, not proof of runtime errors.
 
 Supported static semantics include **PyTorch**, **Hugging Face Transformers**,
 **Hugging Face Datasets**, and **PEFT**, as well as composite techniques such
