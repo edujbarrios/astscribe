@@ -11,10 +11,10 @@ Jupyter notebook to (1) explain detected ML operations with source evidence,
 (2) outline an experiment, (3) warn about suspicious cell order, and
 (4) identify cells potentially affected by a change.
 
-**It never executes the code being analyzed.** All examples below run with
-only `astscribe` installed: PyTorch, Transformers, Datasets and PEFT appear
-inside **strings** rather than actual imports. No model downloads, GPU, LLM,
-API key or network access are required.
+**It never executes the code being analyzed.** The five Python walkthroughs
+below need only `astscribe`: ML frameworks appear inside **strings**, not
+actual imports. After installation, no model downloads, GPU, API keys, LLM or
+network calls are required to run these examples.
 
 ## Install
 
@@ -26,6 +26,7 @@ python -m pip install astscribe
 
 Each example is independent. Copy its Python block into a script or notebook;
 the output underneath is checked automatically against the library in CI.
+
 ### 1. Audit a training step — and find its evidence
 
 **Question:** Does this snippet actually do backpropagation and an optimizer update? Where?
@@ -93,7 +94,7 @@ Model architecture
 Training procedure
 ```
 
-**Why it matters:** You can understand the workflow before running it. Only stages supported by ASTscribe's static rules appear; a missing stage is not proof that it never happens.
+**Why it matters:** You can understand the workflow before running it. Only stages supported by ASTScribe's static rules appear; a missing stage is not proof that it never happens.
 
 ### 3. Flag cells that rely on later definitions
 
@@ -235,7 +236,7 @@ Verified 3 executed example notebooks; all stored outputs match.
 
 Supported static semantics include **PyTorch**, **Hugging Face Transformers**,
 **Hugging Face Datasets**, and **PEFT**, as well as composite techniques such
-as QLoRA. ASTscribe cannot infer arbitrary dynamic values, actual execution
+as QLoRA. ASTScribe cannot infer arbitrary dynamic values, actual execution
 order, hidden kernel history, or performance results. A diagnostic is a
 reason to inspect your code, not proof of a runtime error.
 
