@@ -5,6 +5,25 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.9.1] - 2026-10-08
+
+### Added
+
+- Three self-contained, executed example Jupyter notebooks with recorded outputs covering PyTorch inference/training semantics, notebook dependencies and impact, and static notebook auditing.
+- A CI notebook-reproducibility job that re-executes example notebooks and checks stored outputs and execution counts.
+- Additional regression tests for source-order cell indexing, augmented assignment, and CLI option validation.
+
+### Changed
+
+- Simplified the README from ten badges to three and documented the exact output alongside each runnable usage example.
+- Reject CLI options that were silently ignored: non-notebook report selections, `--cell` without an impact report, and `--evidence` outside a methodology text report.
+
+### Fixed
+
+- Appending notebook cells after Markdown, empty code, or syntax-skipped cells now preserves original `.ipynb` coordinate positions even when the skipped content occurs at the end of the notebook.
+- Explicit notebook cell indices may not reuse positions already occupied by earlier notebook cells, even if those cells were not analyzed.
+- Augmented attribute and subscript assignments no longer produce duplicate static reads of their target base and index expressions.
+
 ## [0.9.0] - 2026-10-07
 
 ### Added

@@ -142,7 +142,8 @@ Notebook reports are also available from the CLI, such as
 `astscribe experiment.ipynb --report diagnostics --json` and
 `astscribe experiment.ipynb --report dependencies --dot`. Use `--strict`
 to reject unsupported notebook cells, and `--fail-on-warning` to report
-dependency warnings with a non-zero exit status.
+dependency warnings with a non-zero exit status. Incompatible report and output
+options are rejected rather than silently ignored.
 
 ## Jupyter / IPython
 

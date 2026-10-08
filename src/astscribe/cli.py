@@ -121,6 +121,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise ValueError("--dot is only supported with notebook --report dependencies")
         if args.fail_on_warning and not is_notebook:
             raise ValueError("--fail-on-warning is only supported for notebooks")
+        if args.cell is not None and (not is_notebook or args.report != "impact"):
+            raise ValueError("--cell is only supported with notebook --report impact")
+        if not is_notebook and args.report != "methodology":
+            raise ValueError("--report is only supported for notebooks")
+        if args.evidence and (not is_notebook or args.report != "methodology" or args.json):
+            raise ValueError("--evidence requires a notebook methodology text report")
         exit_code = 0
         if is_notebook:
             notebook = NotebookAnalyzer.from_ipynb(

@@ -42,6 +42,10 @@ def main() -> int:
                 continue
             if before.execution_count is None:
                 raise AssertionError(f"{path.name} cell {index}: missing saved execution count")
+            if before.execution_count != after.execution_count:
+                raise AssertionError(
+                    f"{path.name} cell {index}: recorded execution count differs"
+                )
             if before.outputs != after.outputs:
                 raise AssertionError(
                     f"{path.name} cell {index}: recorded outputs differ; "

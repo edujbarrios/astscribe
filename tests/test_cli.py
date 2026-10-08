@@ -257,3 +257,26 @@ def test_cli_rejects_fail_on_warning_for_python_source(tmp_path: Path) -> None:
 
     with pytest.raises(SystemExit, match="2"):
         main([str(source), "--fail-on-warning"])
+
+def test_cli_rejects_report_mode_on_python_file(tmp_path: Path) -> None:
+    source = tmp_path / "script.py"
+    source.write_text("x = 1", encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="2"):
+        main([str(source), "--report", "diagnostics"])
+
+
+def test_cli_rejects_cell_on_non_impact_notebook_report(tmp_path: Path) -> None:
+    path = tmp_path / "notebook.ipynb"
+    path.write_text('{"cells":[]}', encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="2"):
+        main([str(path), "--report", "diagnostics", "--cell", "0"])
+
+
+def test_cli_rejects_unused_evidence_option_for_json(tmp_path: Path) -> None:
+    path = tmp_path / "notebook.ipynb"
+    path.write_text('{"cells":[]}', encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="2"):
+        main([str(path), "--report", "methodology", "--json", "--evidence"])
