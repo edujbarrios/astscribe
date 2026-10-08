@@ -131,3 +131,50 @@ def test_rejected_cell_does_not_mutate_notebook_context() -> None:
     assert analyzer.cell_indices == (0,)
     assert analyzer.add_cell("y = x + 1").source == "y = x + 1"
     assert analyzer.cell_indices == (0, 1)
+
+def test_append_after_trailing_markdown_and_skipped_cells() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data(
+        {
+            "cells": [
+                {"cell_type": "code", "source": "x = 1"},
+                {"cell_type": "markdown", "source": "analysis"},
+                {"cell_type": "code", "source": "%timeit x"},
+                {"cell_type": "code", "source": ""},
+                {"cell_type": "markdown", "source": "last note"},
+            ]
+        }
+    )
+
+    result = analyzer.add_cell("y = x + 1")
+
+    assert analyzer.cell_indices == (0, 5)
+    assert analyzer.dependency_graph().edges[0].consumer_cell == 5
+    assert result.source == "y = x + 1"
+
+
+def test_append_to_notebook_with_no_analyzable_code_uses_full_index() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data(
+        {"cells": [
+            {"cell_type": "markdown", "source": "# Heading"},
+            {"cell_type": "code", "source": "!echo skipped"},
+            {"cell_type": "code", "source": "  "},
+        ]}
+    )
+
+    analyzer.add_cell("x = 1")
+
+    assert analyzer.cell_indices == (3,)
+
+
+def test_explicit_index_cannot_reuse_skipped_notebook_position() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data(
+        {"cells": [
+            {"cell_type": "code", "source": "x = 1"},
+            {"cell_type": "markdown", "source": "some notes"},
+        ]}
+    )
+
+    with pytest.raises(ValueError, match="existing notebook cell index"):
+        analyzer.add_cell("y = 2", cell_index=1)
+
+    assert analyzer.cell_indices == (0,)
