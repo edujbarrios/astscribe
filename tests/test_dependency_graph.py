@@ -319,3 +319,30 @@ def test_exception_alias_is_scoped_to_handler_and_cleared_afterwards() -> None:
     assert "exc" not in graph.nodes[0].unresolved_reads
     assert graph.edges == ()
     assert graph.nodes[1].unresolved_reads == ("exc",)
+
+def test_augmented_subscript_reads_target_and_index_only_once() -> None:
+    events = collect_symbol_events("values[offset] += delta")
+
+    assert [(event.kind, event.symbol) for event in events] == [
+        ("read", "values"),
+        ("read", "offset"),
+        ("read", "delta"),
+    ]
+
+
+def test_augmented_attribute_reads_base_only_once() -> None:
+    events = collect_symbol_events("settings.counter += increment")
+
+    assert [(event.kind, event.symbol) for event in events] == [
+        ("read", "settings"),
+        ("read", "increment"),
+    ]
+
+
+def test_name_augmented_assignment_still_reads_before_rebinding() -> None:
+    events = collect_symbol_events("counter += 1")
+
+    assert [(event.kind, event.symbol) for event in events] == [
+        ("read", "counter"),
+        ("write", "counter"),
+    ]
