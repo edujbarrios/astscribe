@@ -5,6 +5,20 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.10.1] - 2026-10-08
+
+### Fixed
+
+- Notebooks containing unsupported code or IPython magics now invalidate stale imports, constants and constructor bindings before subsequent analysis. This prevents claims based on context that unknown code might have changed.
+- Static symbol-flow edges no longer cross skipped/unsupported notebook cells, so impact analysis does not incorrectly assume a dependency survived a potentially state-changing cell.
+- Non-string/unhashable notebook cell types are reported as skipped (or rejected in strict mode) instead of raising an uncaught `TypeError`.
+- Regression tests cover context invalidation, safe reintroduction of imports, skipped-cell dependency barriers, trailing unsupported cells, and Markdown/empty cells that should preserve context.
+
+### Changed
+
+- The README now leads with the scientific question of understanding unfamiliar research notebooks, emphasizing traceable evidence and the boundary between supported static interpretation and measured outcomes.
+- Package metadata describes the notebook understanding and audit use case more precisely.
+
 ## [0.10.0] - 2026-10-08
 
 ### Added
