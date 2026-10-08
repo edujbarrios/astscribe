@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "astscribe"
 dynamic = ["version"]
-description = "Evidence-backed scientific explanations for ML notebooks, without LLMs."
+description = "Understand unfamiliar ML notebooks with evidence-backed explanations inside Jupyter, without LLMs."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
