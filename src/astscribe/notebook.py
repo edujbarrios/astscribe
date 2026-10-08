@@ -92,7 +92,9 @@ class NotebookAnalyzer:
         for notebook_index, cell in enumerate(cells):
             if not isinstance(cell, dict):
                 reason = "cell is not an object"
-            elif cell.get("cell_type") in {"markdown", "raw"}:
+            elif isinstance(cell.get("cell_type"), str) and cell["cell_type"] in {
+                "markdown", "raw"
+            }:
                 continue
             elif cell.get("cell_type") != "code":
                 reason = f"unsupported cell_type {cell.get('cell_type')!r}"
@@ -105,6 +107,7 @@ class NotebookAnalyzer:
                 if not skip_invalid_python:
                     raise ValueError(f"Invalid notebook cell {notebook_index}: {reason}.")
                 analyzer._skipped_cells.append(SkippedCell(notebook_index, reason))
+                analyzer._reset_context()
                 continue
 
             raw_source = cell["source"]
@@ -119,6 +122,7 @@ class NotebookAnalyzer:
                 if not skip_invalid_python:
                     raise ValueError(f"Invalid notebook code cell {notebook_index}: {reason}.")
                 analyzer._skipped_cells.append(SkippedCell(notebook_index, reason))
+                analyzer._reset_context()
                 continue
 
             if not source.strip():
@@ -131,11 +135,17 @@ class NotebookAnalyzer:
                     raise
                 reason = f"not valid Python for static AST analysis: {exc.msg}"
                 analyzer._skipped_cells.append(SkippedCell(notebook_index, reason))
+                analyzer._reset_context()
 
         # Keep the full notebook coordinate space, including trailing markdown,
         # empty code, and syntax-skipped cells that have no AnalysisResult.
         analyzer._next_cell_index = len(cells)
         return analyzer
+
+    def _reset_context(self) -> None:
+        """Discard inferred bindings after unsupported code with unknown side effects."""
+        self._imports = ImportTable()
+        self._symbols = SymbolTable()
 
     def add_cell(self, source: str, *, cell_index: int | None = None) -> AnalysisResult:
         if cell_index is None:
@@ -267,7 +277,9 @@ class NotebookAnalyzer:
         """Build a static symbol-flow graph between analyzed notebook cells."""
 
         cells = tuple(zip(self._cell_indices, self._cells, strict=True))
-        return build_dependency_graph(cells)
+        return build_dependency_graph(
+            cells, barriers=tuple(item.index for item in self._skipped_cells)
+        )
 
     def render_dependency_graph(self) -> str:
         """Render cross-cell symbol dependencies as deterministic text."""

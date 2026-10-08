@@ -421,13 +421,25 @@ def collect_symbol_events(source: str) -> tuple[SymbolEvent, ...]:
 
 def build_dependency_graph(
     cells: tuple[tuple[int, str], ...],
+    *,
+    barriers: tuple[int, ...] = (),
 ) -> NotebookDependencyGraph:
+    """Resolve source-order dependencies without crossing unknown-code boundaries."""
     producer: dict[str, int] = {}
     nodes: list[CellDependencyNode] = []
     edge_symbols: dict[tuple[int, int], set[str]] = {}
     redefinitions: list[SymbolRedefinition] = []
 
+    barrier_positions = iter(sorted(barriers))
+    next_barrier = next(barrier_positions, None)
+
     for cell, source in cells:
+        # Unknown notebook syntax may rebind or delete any previously defined
+        # symbol. Do not claim a dependency across that unsupported cell.
+        while next_barrier is not None and next_barrier < cell:
+            producer.clear()
+            next_barrier = next(barrier_positions, None)
+
         events = collect_symbol_events(source)
         defines: set[str] = set()
         reads: set[str] = set()
