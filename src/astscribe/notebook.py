@@ -90,10 +90,24 @@ class NotebookAnalyzer:
 
         analyzer = cls()
         for notebook_index, cell in enumerate(cells):
-            if not isinstance(cell, dict) or cell.get("cell_type") != "code":
+            if not isinstance(cell, dict):
+                reason = "cell is not an object"
+            elif cell.get("cell_type") in {"markdown", "raw"}:
+                continue
+            elif cell.get("cell_type") != "code":
+                reason = f"unsupported cell_type {cell.get('cell_type')!r}"
+            elif "source" not in cell:
+                reason = "code cell is missing a source field"
+            else:
+                reason = ""
+
+            if reason:
+                if not skip_invalid_python:
+                    raise ValueError(f"Invalid notebook cell {notebook_index}: {reason}.")
+                analyzer._skipped_cells.append(SkippedCell(notebook_index, reason))
                 continue
 
-            raw_source = cell.get("source", "")
+            raw_source = cell["source"]
             if isinstance(raw_source, list) and all(
                 isinstance(part, str) for part in raw_source
             ):
@@ -158,7 +172,28 @@ class NotebookAnalyzer:
         return self._results[index]
 
     def explain_cell(self, index: int, style: str = "scientific") -> str:
+        """Explain an analyzed cell by its position among analyzed Python cells."""
         return self.analyze_cell(index).render(style)
+
+    def analyze_notebook_cell(self, cell_index: int) -> AnalysisResult:
+        """Analyze by the original .ipynb cell index, including Markdown gaps."""
+        if type(cell_index) is not int or cell_index < 0:
+            raise ValueError("cell_index must be a non-negative integer.")
+        try:
+            position = self._cell_indices.index(cell_index)
+        except ValueError as exc:
+            if any(item.index == cell_index for item in self._skipped_cells):
+                raise ValueError(
+                    f"Notebook cell {cell_index} was skipped during static analysis."
+                ) from exc
+            raise ValueError(
+                f"Notebook cell {cell_index} has no analyzed Python code."
+            ) from exc
+        return self._results[position]
+
+    def explain_notebook_cell(self, cell_index: int, style: str = "scientific") -> str:
+        """Explain a cell using its original index in a loaded notebook."""
+        return self.analyze_notebook_cell(cell_index).render(style)
 
     def methodology(self) -> MethodologyReport:
         """Build a notebook-level, evidence-backed scientific Methods report."""
@@ -169,6 +204,44 @@ class NotebookAnalyzer:
         """Render the notebook methodology as deterministic Markdown."""
 
         return self.methodology().render(include_evidence=include_evidence)
+
+    def render_overview(self, *, include_evidence: bool = False) -> str:
+        """Explain an entire notebook with methodology, pipeline and diagnostics.
+
+        The source is analyzed statically; no notebook cells are executed.
+        """
+        methods = self.render_methodology(include_evidence=include_evidence)
+        methods = methods.removeprefix("# Methods").strip()
+        methods = methods.replace("## ", "### ") if methods else (
+            "No supported ML methodology was identified."
+        )
+        diagnostics = self.render_diagnostics()
+        diagnostics = diagnostics.removeprefix("# Notebook diagnostics").strip()
+
+        sections = [
+            "# Notebook overview",
+            "",
+            f"- Analyzed Python cells: {self.cell_count}",
+            f"- Skipped cells: {len(self.skipped_cells)}",
+            "",
+            "## Experiment pipeline",
+            "",
+            self.render_pipeline(),
+            "",
+            "## Methodology",
+            "",
+            methods,
+            "",
+            "## Dependency diagnostics",
+            "",
+            diagnostics,
+        ]
+        if self.skipped_cells:
+            sections.extend(["", "## Skipped cells", ""])
+            sections.extend(
+                f"- Cell {item.index}: {item.reason}" for item in self.skipped_cells
+            )
+        return "\n".join(sections)
 
     def pipeline(self) -> ExperimentPipeline:
         """Build a structured experiment pipeline from evidence-backed operations."""
@@ -248,7 +321,7 @@ class NotebookAnalyzer:
 
     @property
     def skipped_cells(self) -> tuple[SkippedCell, ...]:
-        """Cells skipped because they could not be represented as static Python AST."""
+        """Notebook cells skipped because their shape or Python source is unsupported."""
 
         return tuple(self._skipped_cells)
 
