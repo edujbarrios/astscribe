@@ -2,102 +2,190 @@
 
 > Evidence-backed scientific explanations for ML notebooks, without LLMs.
 
-[![PyPI](https://img.shields.io/pypi/v/astscribe?label=PyPI&logo=pypi&logoColor=white)](https://pypi.org/project/astscribe/)
-[![Python](https://img.shields.io/pypi/pyversions/astscribe?logo=python&logoColor=white)](https://pypi.org/project/astscribe/)
+[![PyPI](https://img.shields.io/pypi/v/astscribe?label=PyPI)](https://pypi.org/project/astscribe/)
+[![Python](https://img.shields.io/pypi/pyversions/astscribe)](https://pypi.org/project/astscribe/)
 [![CI](https://github.com/edujbarrios/astscribe/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/edujbarrios/astscribe/actions/workflows/tests.yml)
-[![Downloads](https://img.shields.io/pypi/dm/astscribe?label=downloads)](https://pypi.org/project/astscribe/)
-[![License](https://img.shields.io/pypi/l/astscribe)](https://github.com/edujbarrios/astscribe/blob/main/LICENSE)
-[![Release](https://img.shields.io/github/v/release/edujbarrios/astscribe?display_name=tag&label=release)](https://github.com/edujbarrios/astscribe/releases)
-[![Stars](https://img.shields.io/github/stars/edujbarrios/astscribe?label=stars)](https://github.com/edujbarrios/astscribe/stargazers)
-[![Issues](https://img.shields.io/github/issues/edujbarrios/astscribe)](https://github.com/edujbarrios/astscribe/issues)
-[![Last commit](https://img.shields.io/github/last-commit/edujbarrios/astscribe)](https://github.com/edujbarrios/astscribe/commits/main)
-[![Repo size](https://img.shields.io/github/repo-size/edujbarrios/astscribe)](https://github.com/edujbarrios/astscribe)
 
-ASTScribe statically analyzes Python and Jupyter notebooks and turns supported ML
-operations into deterministic, traceable explanations.
+ASTScribe statically analyzes Python and Jupyter notebooks and produces deterministic,
+traceable explanations of supported ML operations in **PyTorch**, **Transformers**,
+**Datasets**, and **PEFT**.
 
-**No LLMs. No API keys. No code execution. No telemetry.**
+**No LLMs. No API keys. No execution of analyzed code. No telemetry.**
 
-## Install
+## Installation
 
 ```bash
 python -m pip install astscribe
 ```
 
-For Jupyter/IPython:
+For IPython/Jupyter magics, install the optional extra with
+`python -m pip install "astscribe[ipython]"`.
 
-```bash
-python -m pip install "astscribe[ipython]"
-```
+## Explain inference and training
 
-## Python
+PyTorch is **not required** to run this example: the source inside the string is
+*analyzed*, never executed.
 
 ```python
 from astscribe import explain
 
-print(explain("import torch\nwith torch.no_grad():\n    output = model(inputs)"))
-```
-
-ASTScribe analyzes the source without executing it.
-
-## Jupyter / IPython
-
-Load the extension once, then explain any executed input by its `In[n]` number:
-
-```python
-%load_ext astscribe.ipython
-%scribe 4
-%scribe 7 concise
-```
-
-`%scribe N` rebuilds forward-only static context from earlier Python inputs and explains
-`In[N]`. IPython-only syntax acts as a conservative context boundary because ASTScribe
-does not execute or infer its runtime side effects.
-
-To explain the cell you are writing:
-
-```python
-%%scribe concise
+source = """import torch
+model.eval()
 with torch.no_grad():
-    output = model(inputs)
+    outputs = model(inputs)
+"""
+print(explain(source, style="concise"))
 ```
 
-The `%%scribe` body is analyzed, not executed.
+Output:
 
-## Notebook files
+```text
+Performs PyTorch inference using evaluation-oriented execution semantics.
+```
+
+A training step can be analyzed in the same way:
+
+```python
+training = """model.train()
+for batch in train_loader:
+    optimizer.zero_grad()
+    outputs = model(**batch)
+    loss = outputs.loss
+    loss.backward()
+    optimizer.step()
+"""
+print(explain(training, style="concise"))
+```
+
+Output:
+
+```text
+Performs a PyTorch gradient-based training step with backward propagation and a parameter update.
+```
+
+Use `analyze(source)` to get structured operations, claims, provenance and
+inference/training flags, instead of rendered text.
+
+## Notebook dependencies
 
 ```python
 from astscribe import NotebookAnalyzer
 
-notebook = NotebookAnalyzer.from_ipynb("experiment.ipynb")
-print(notebook.render_methodology())
+notebook = NotebookAnalyzer.from_cells([
+    "raw = 10",
+    "features = raw * 2",
+    "prediction = features + 1",
+])
+print(notebook.render_dependency_graph())
 ```
 
-Other notebook reports include dependencies, diagnostics, impact, impact ranking,
-experiment pipelines, and composite techniques.
+Output:
+
+```text
+# Cell dependency graph
+
+Cell 0 -> Cell 1 [raw]
+Cell 1 -> Cell 2 [features]
+```
+
+Find the downstream cells affected by changing an earlier cell:
+
+```python
+print(notebook.render_impact_ranking())
+```
+
+Output:
+
+```text
+# Notebook impact ranking
+
+- Cell 0: 2 affected cell(s), 1 direct dependent(s).
+- Cell 1: 1 affected cell(s), 1 direct dependent(s).
+- Cell 2: 0 affected cell(s), 0 direct dependent(s).
+```
+
+## Analyze an existing notebook file
+
+This command **reads** a committed example notebook; it does not execute its cells.
+
+```python
+from astscribe import NotebookAnalyzer
+
+report = NotebookAnalyzer.from_ipynb("examples/notebooks/notebook_audit.ipynb")
+print(report.cell_count)
+```
+
+Output:
+
+```text
+3
+```
+
+Further reports: `render_methodology()`, `render_pipeline()`,
+`render_diagnostics()`, `render_impact(cell)`, `dependency_dot()`,
+and structured `to_dict()` results. Analyzing a real `.ipynb` preserves
+original cell indices, even when Markdown or unsupported cells appear between them.
 
 ## CLI
 
 ```bash
-astscribe training.py --style concise
-astscribe experiment.ipynb --report methodology
-astscribe experiment.ipynb --report diagnostics --json
-astscribe experiment.ipynb --report impact --cell 3
+printf 'value = 1\n' | astscribe - --style concise
 ```
 
-The same CLI is available as `python -m astscribe`. Use `--strict` to reject notebook
-code cells that are not valid Python and `--fail-on-warning` to return status 1 when
-dependency diagnostics contain warnings.
+Output (no supported ML operations in this source):
 
-## Supported semantics
+```text
+No supported PyTorch semantics were identified in the analyzed source.
+```
 
-ASTScribe has first-class static semantics for **PyTorch**, **Hugging Face
-Transformers**, **Hugging Face Datasets**, and **PEFT**. It can reconstruct notebook
-methodology, experiment pipelines, cross-cell dependencies, diagnostics, impact, and
-conservative composite techniques such as QLoRA.
+Notebook reports are also available from the CLI, such as
+`astscribe experiment.ipynb --report diagnostics --json` and
+`astscribe experiment.ipynb --report dependencies --dot`. Use `--strict`
+to reject unsupported notebook cells, and `--fail-on-warning` to report
+dependency warnings with a non-zero exit status.
 
-Generated claims retain source provenance and an evidence level. Detailed contracts and
-limitations live in [docs](https://github.com/edujbarrios/astscribe/tree/main/docs).
+## Jupyter / IPython
+
+Install `astscribe[ipython]` and load the extension with
+`%load_ext astscribe.ipython`. Then `%scribe N concise` explains
+the previous `In[N]` input using earlier static context, and
+`%%scribe concise` explains the current cell without running the body.
+These magics display the same deterministic text in Markdown form.
+
+## Executed notebooks with recorded outputs
+
+All three example notebooks contain **real code cells and saved outputs** displayed
+by GitHub's notebook viewer. They analyze code statically, so no ML frameworks,
+datasets, GPUs or network calls are needed to run them.
+
+- [Inference and training](examples/notebooks/inference_and_training.ipynb): concise explanations and structured inference flags.
+- [Dependencies and impact](examples/notebooks/dependencies_and_impact.ipynb): dataflow, transitive impact paths, diagnostics.
+- [Notebook audit](examples/notebooks/notebook_audit.ipynb): skipped IPython syntax, forward-reference warnings, and adding cells with correct original indices.
+
+Re-run and compare the notebooks against their committed outputs after installing
+`nbclient`, `nbformat` and `ipykernel`:
+
+```bash
+python scripts/verify_notebooks.py
+```
+
+Expected terminal output:
+
+```text
+Verified 3 executed example notebooks; all stored outputs match.
+```
+
+The verifier fails if any output differs, and runs in CI. To deliberately
+refresh the recorded outputs, use
+`python scripts/verify_notebooks.py --update`.
+
+## Scope and limitations
+
+ASTScribe provides evidence-backed semantics for PyTorch, Hugging Face
+Transformers, Hugging Face Datasets and PEFT. It can infer methodology,
+experiment pipelines, cross-cell dependencies, diagnostics, impact and
+composite techniques such as QLoRA. Dynamic effects and hidden Jupyter
+kernel state are not inferred. See the [technical documentation](docs/).
 
 ## Development
 
@@ -108,9 +196,4 @@ ruff check .
 mypy src/astscribe
 ```
 
-See [CONTRIBUTING.md](https://github.com/edujbarrios/astscribe/blob/main/CONTRIBUTING.md)
-and [docs/releasing.md](https://github.com/edujbarrios/astscribe/blob/main/docs/releasing.md).
-
-## License
-
-Apache License 2.0. See [LICENSE](https://github.com/edujbarrios/astscribe/blob/main/LICENSE).
+Contributions: [CONTRIBUTING.md](CONTRIBUTING.md). License: [Apache-2.0](LICENSE).

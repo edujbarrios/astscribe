@@ -104,3 +104,24 @@ jobs:
                   f"ASTScribe wheel exceeds the {limit:,}-byte project limit: {size:,} bytes"
               )
           PY
+
+  notebooks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install notebook execution dependencies
+        run: |
+          python -m pip install -e . 'nbclient>=0.10' 'nbformat>=5' 'ipykernel>=6'
+
+      - name: Verify recorded notebook outputs
+        run: python scripts/verify_notebooks.py

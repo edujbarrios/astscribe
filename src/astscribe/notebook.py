@@ -120,7 +120,17 @@ class NotebookAnalyzer:
         return analyzer
 
     def add_cell(self, source: str, *, cell_index: int | None = None) -> AnalysisResult:
-        context_index = len(self._cells) if cell_index is None else cell_index
+        if cell_index is None:
+            # Preserve original notebook coordinates after markdown or skipped cells.
+            context_index = self._cell_indices[-1] + 1 if self._cell_indices else 0
+        else:
+            if type(cell_index) is not int or cell_index < 0:
+                raise ValueError("cell_index must be a non-negative integer.")
+            context_index = cell_index
+
+        if self._cell_indices and context_index <= self._cell_indices[-1]:
+            raise ValueError("cell_index must be greater than the last analyzed cell index.")
+
         parsed = parse_source(source, cell=context_index)
 
         imports = update_import_table(parsed.tree, base=self._imports)
