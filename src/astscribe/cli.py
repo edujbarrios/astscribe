@@ -30,6 +30,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--report",
         choices=(
+            "overview",
             "methodology",
             "pipeline",
             "techniques",
@@ -72,6 +73,18 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _notebook_payload(notebook: NotebookAnalyzer, args: argparse.Namespace) -> Any:
+    if args.report == "overview":
+        return {
+            "analyzed_cells": notebook.cell_count,
+            "cell_indices": list(notebook.cell_indices),
+            "skipped_cells": [
+                {"index": item.index, "reason": item.reason}
+                for item in notebook.skipped_cells
+            ],
+            "pipeline": notebook.pipeline().to_dict(),
+            "methodology": notebook.methodology().to_dict(),
+            "diagnostics": notebook.diagnostics().to_dict(),
+        }
     if args.report == "methodology":
         return notebook.methodology().to_dict()
     if args.report == "pipeline":
@@ -94,6 +107,8 @@ def _render_notebook(notebook: NotebookAnalyzer, args: argparse.Namespace) -> st
         raise ValueError("--dot is only supported with --report dependencies")
     if args.json:
         return json.dumps(_notebook_payload(notebook, args), indent=2, sort_keys=True)
+    if args.report == "overview":
+        return notebook.render_overview(include_evidence=args.evidence)
     if args.report == "methodology":
         return notebook.render_methodology(include_evidence=args.evidence)
     if args.report == "pipeline":
@@ -125,8 +140,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise ValueError("--cell is only supported with notebook --report impact")
         if not is_notebook and args.report != "methodology":
             raise ValueError("--report is only supported for notebooks")
-        if args.evidence and (not is_notebook or args.report != "methodology" or args.json):
-            raise ValueError("--evidence requires a notebook methodology text report")
+        if args.evidence and (not is_notebook or args.report not in {"overview", "methodology"} or args.json):
+            raise ValueError("--evidence requires an overview or methodology text report")
         exit_code = 0
         if is_notebook:
             notebook = NotebookAnalyzer.from_ipynb(

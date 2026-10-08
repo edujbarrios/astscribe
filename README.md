@@ -1,17 +1,22 @@
 # ASTScribe
 
-> Evidence-backed explanations and notebook diagnostics for machine-learning code — no LLM required.
+> Understand someone else's ML notebook without leaving Jupyter — evidence-backed, no LLM required.
 
 [![PyPI](https://img.shields.io/pypi/v/astscribe?label=PyPI)](https://pypi.org/project/astscribe/)
 [![Python](https://img.shields.io/pypi/pyversions/astscribe)](https://pypi.org/project/astscribe/)
 [![CI](https://github.com/edujbarrios/astscribe/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/edujbarrios/astscribe/actions/workflows/tests.yml)
 [![Try it in Colab](https://img.shields.io/badge/Try%20it%20in-Colab-F9AB00?logo=googlecolab&logoColor=white)](https://colab.research.google.com/github/edujbarrios/astscribe/blob/main/examples/notebooks/quick_examples.ipynb)
 
-**Explain what your machine-learning code does without leaving your notebook.**
-ASTScribe analyzes Python and Jupyter cells, generating clear, evidence-backed
-explanations of inference, training and other recognized ML operations. It also
-helps reconstruct experiment pipelines, diagnose cell-order problems and
-estimate the impact of edits.
+**Understand what a notebook does without leaving that notebook.**
+Someone shared a research notebook with you? Exploring an open-source project
+built with PyTorch, Transformers or other ML frameworks? ASTScribe explains the
+supported operations **right where you're reading them**, with source-linked
+evidence instead of guesses. Understand inference, training and the overall
+experiment before you try running unfamiliar code. You can also inspect cell
+dependencies, spot out-of-order definitions and see what edits may affect.
+
+Use ASTScribe in Jupyter to explain individual cells or inspect the entire
+`.ipynb` with a single notebook overview. **No LLM or API key required.**
 
 **Start hands-on:** [Run the interactive quick examples in Google Colab](https://colab.research.google.com/github/edujbarrios/astscribe/blob/main/examples/notebooks/quick_examples.ipynb).
 Open the notebook, choose **Runtime → Run all**, and explore each explanation
@@ -28,9 +33,30 @@ try them.
 python -m pip install astscribe
 ```
 
+## Understand a notebook someone sent you
+
+Download or clone the project notebook (for example, `research.ipynb`). Then
+get a **whole-notebook overview**: detected experiment stages, evidence-backed
+methodology, dependency diagnostics and a list of cells ASTScribe had to skip.
+
+```bash
+astscribe research.ipynb --report overview --evidence
+```
+
+Or, **from inside Jupyter**, open the same file using
+`NotebookAnalyzer.from_ipynb("research.ipynb")` and display
+`notebook.render_overview(include_evidence=True)` as Markdown.
+To inspect a particular source cell even when there are Markdown gaps, call
+`notebook.explain_notebook_cell(7)` using its **original** `.ipynb` index.
+For the current notebook's executed input, use `%scribe 7 scientific`.
+
+ASTScribe **only reads and analyzes** the source: it will not run a stranger's
+training code, fetch model weights or execute notebook magics. It reports
+unrecognized/malformed cells instead of silently pretending they were analyzed.
+
 ## See what ASTScribe produces
 
-**The main feature comes first: explaining code inside your notebook.**
+**Start with the main feature: understand an unfamiliar notebook.**
 Each example is independent; you can copy its Python block into a script,
 Jupyter notebook or Colab. The expected output underneath is tested in CI.
 

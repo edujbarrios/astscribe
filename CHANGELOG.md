@@ -5,6 +5,24 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.10.0] - 2026-10-08
+
+### Added
+
+- A whole-notebook overview via `NotebookAnalyzer.render_overview(include_evidence=True)`, combining the experiment pipeline, supported methodology, dependency diagnostics, and skipped-cell details without executing the notebook.
+- `astscribe project.ipynb --report overview` and `--report overview --json` for readable and machine-readable summaries of notebooks from colleagues or open-source repositories.
+- `NotebookAnalyzer.analyze_notebook_cell(index)` and `explain_notebook_cell(index)` for addressing an original `.ipynb` cell even when Markdown, raw, or skipped cells occur between Python cells.
+
+### Changed
+
+- The README now leads with understanding **someone else's ML notebook without leaving Jupyter**, rather than describing one's own code, and documents the new overview and original-index lookup workflow.
+- The permissive `.ipynb` reader now records malformed notebook cells as skipped; strict mode rejects them with clear errors.
+
+### Fixed
+
+- Malformed notebook entries (non-object cells, unknown cell types, or code cells with no `source`) were previously skipped without any diagnostic, potentially giving an incomplete audit while appearing successful.
+- Looking up a real notebook cell by index was awkward with interleaved Markdown: the existing `analyze_cell()` API addresses analyzed-cell ordinal positions, whereas the new original-index APIs cannot silently select the wrong cell.
+
 ## [0.9.1] - 2026-10-08
 
 ### Added

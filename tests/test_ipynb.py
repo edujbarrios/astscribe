@@ -178,3 +178,82 @@ def test_explicit_index_cannot_reuse_skipped_notebook_position() -> None:
         analyzer.add_cell("y = 2", cell_index=1)
 
     assert analyzer.cell_indices == (0,)
+
+
+def test_original_notebook_cell_lookup_ignores_markdown_gaps() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data({
+        "cells": [
+            {"cell_type": "markdown", "source": "# Model"},
+            {"cell_type": "code", "source": "import torch\nmodel.eval()"},
+            {"cell_type": "raw", "source": "Notes"},
+            {"cell_type": "code", "source": "with torch.no_grad():\n    prediction = model(inputs)"},
+        ]
+    })
+    assert analyzer.cell_indices == (1, 3)
+    assert analyzer.analyze_notebook_cell(3) is analyzer.results[1]
+    assert "Gradient tracking is disabled" in analyzer.explain_notebook_cell(3)
+
+    with pytest.raises(ValueError, match="no analyzed Python code"):
+        analyzer.explain_notebook_cell(2)
+    with pytest.raises(ValueError, match="non-negative integer"):
+        analyzer.explain_notebook_cell(True)
+
+
+def test_invalid_notebook_shapes_are_reported_without_losing_indices() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data({
+        "cells": [
+            {"cell_type": "code", "source": "x = 1"},
+            None,
+            {"cell_type": "python", "source": "x = 2"},
+            {"cell_type": "code"},
+            {"cell_type": "markdown", "source": "# title"},
+            {"cell_type": "code", "source": "y = x + 1"},
+        ]
+    })
+    assert analyzer.cell_indices == (0, 5)
+    assert [item.index for item in analyzer.skipped_cells] == [1, 2, 3]
+    assert "not an object" in analyzer.skipped_cells[0].reason
+    assert "unsupported cell_type" in analyzer.skipped_cells[1].reason
+    assert "missing a source field" in analyzer.skipped_cells[2].reason
+    with pytest.raises(ValueError, match="was skipped"):
+        analyzer.analyze_notebook_cell(2)
+
+
+@pytest.mark.parametrize("cell", [
+    None,
+    {"cell_type": "python", "source": "x = 1"},
+    {"cell_type": "code"},
+])
+def test_strict_loader_rejects_malformed_notebook_cells(cell: object) -> None:
+    with pytest.raises(ValueError, match="Invalid notebook cell 0"):
+        NotebookAnalyzer.from_ipynb_data(
+            {"cells": [cell]}, skip_invalid_python=False
+        )
+
+
+def test_whole_notebook_overview_covers_pipeline_methods_and_skipped_cells() -> None:
+    analyzer = NotebookAnalyzer.from_ipynb_data({
+        "cells": [
+            {"cell_type": "markdown", "source": "# Experiment"},
+            {"cell_type": "code", "source": "import torch\nmodel.eval()"},
+            {"cell_type": "code", "source": "%time train()"},
+            {"cell_type": "code", "source": "with torch.no_grad():\n    output = model(inputs)"},
+        ]
+    })
+    overview = analyzer.render_overview(include_evidence=True)
+    assert overview.startswith("# Notebook overview")
+    assert "Analyzed Python cells: 2" in overview
+    assert "Skipped cells: 1" in overview
+    assert "## Experiment pipeline" in overview
+    assert "## Methodology" in overview
+    assert "## Dependency diagnostics" in overview
+    assert "## Skipped cells" in overview
+    assert "Cell 2:" in overview
+    assert "pytorch.no_grad" in overview
+    assert "### Evaluation and inference" in overview
+
+
+def test_empty_notebook_overview_explains_missing_evidence() -> None:
+    overview = NotebookAnalyzer.from_cells([]).render_overview()
+    assert "No supported ML methodology was identified." in overview
+    assert "No evidence-backed experiment pipeline could be reconstructed." in overview
