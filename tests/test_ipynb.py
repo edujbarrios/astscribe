@@ -102,11 +102,13 @@ def test_append_after_ipynb_uses_original_coordinate_space() -> None:
     analyzer.add_cell("z = y + 1")
 
     assert analyzer.cell_indices == (1, 3, 4)
+    # The skipped %timeit cell may have changed x, so no edge can safely
+    # connect its earlier definition to later code.
     assert [(e.producer_cell, e.consumer_cell) for e in analyzer.dependency_graph().edges] == [
-        (1, 3),
         (3, 4),
     ]
-    assert analyzer.impact(1).affected_cells == (3, 4)
+    assert analyzer.impact(1).affected_cells == ()
+    assert analyzer.impact(3).affected_cells == (4,)
 
 
 def test_explicit_cell_indices_must_be_unique_and_increasing() -> None:
@@ -148,7 +150,10 @@ def test_append_after_trailing_markdown_and_skipped_cells() -> None:
     result = analyzer.add_cell("y = x + 1")
 
     assert analyzer.cell_indices == (0, 5)
-    assert analyzer.dependency_graph().edges[0].consumer_cell == 5
+    # A skipped magic is a static context barrier; the appended cell keeps
+    # its original index without claiming x was preserved across that magic.
+    assert analyzer.dependency_graph().edges == ()
+    assert "x" in analyzer.dependency_graph().nodes[-1].unresolved_reads
     assert result.source == "y = x + 1"
 
 
