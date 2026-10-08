@@ -280,3 +280,46 @@ def test_cli_rejects_unused_evidence_option_for_json(tmp_path: Path) -> None:
 
     with pytest.raises(SystemExit, match="2"):
         main([str(path), "--report", "methodology", "--json", "--evidence"])
+
+
+def test_cli_overview_summarizes_a_shared_notebook(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "shared.ipynb"
+    path.write_text(json.dumps({
+        "cells": [
+            {"cell_type": "markdown", "source": "## Notes"},
+            {"cell_type": "code", "source": "import torch\nmodel.eval()"},
+            {"cell_type": "code", "source": "%time something()"},
+        ]
+    }), encoding="utf-8")
+
+    assert main([str(path), "--report", "overview", "--evidence"]) == 0
+    output = capsys.readouterr().out
+    assert "# Notebook overview" in output
+    assert "Analyzed Python cells: 1" in output
+    assert "Skipped cells: 1" in output
+    assert "## Methodology" in output
+    assert "pytorch.model_eval" in output
+
+
+def test_cli_overview_json_includes_original_indices_and_skipped_cells(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "shared.ipynb"
+    path.write_text(json.dumps({
+        "cells": [
+            {"cell_type": "markdown", "source": "# Notes"},
+            {"cell_type": "code", "source": "import torch\nmodel.eval()"},
+            {"cell_type": "code", "source": "%%bash"},
+        ]
+    }), encoding="utf-8")
+
+    assert main([str(path), "--report", "overview", "--json"]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert data["analyzed_cells"] == 1
+    assert data["cell_indices"] == [1]
+    assert data["skipped_cells"][0]["index"] == 2
+    assert "methodology" in data
+    assert "pipeline" in data
+    assert "diagnostics" in data
