@@ -15,6 +15,7 @@ from .pytorch_experiment import analyze_pytorch_experiment
 from .pytorch_networks import analyze_pytorch_networks
 from .pytorch_reproducibility import analyze_pytorch_reproducibility
 from .torchaudio import analyze_torchaudio
+from .torchvision import analyze_torchvision
 from .transformers import analyze_transformers
 from .transformers_models import analyze_transformers_models
 from .transformers_quantization import analyze_transformers_quantization
@@ -50,6 +51,7 @@ class SemanticRegistry:
             "peft": [cast(SemanticAnalyzer, analyze_peft)],
             "multimodal": [cast(SemanticAnalyzer, analyze_multimodal)],
             "torchaudio": [cast(SemanticAnalyzer, analyze_torchaudio)],
+            "torchvision": [cast(SemanticAnalyzer, analyze_torchvision)],
         }
 
     def analyzers(self) -> dict[str, tuple[SemanticAnalyzer, ...]]:
