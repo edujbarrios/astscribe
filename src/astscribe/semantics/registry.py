@@ -13,10 +13,10 @@ from .pytorch import analyze_pytorch
 from .pytorch_experiment import analyze_pytorch_experiment
 from .pytorch_networks import analyze_pytorch_networks
 from .pytorch_reproducibility import analyze_pytorch_reproducibility
+from .torchvision import analyze_torchvision
 from .transformers import analyze_transformers
 from .transformers_models import analyze_transformers_models
 from .transformers_quantization import analyze_transformers_quantization
-from .torchvision import analyze_torchvision
 
 
 class SemanticOutputProtocol(Protocol):
