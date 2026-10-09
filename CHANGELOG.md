@@ -5,6 +5,25 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.11.0] - 2026-10-09
+
+### Added
+
+- Evidence-linked neural-network vocabulary for common PyTorch convolutional, dense, recurrent, normalization, pooling, embedding and Transformer modules, activations, tensor factories/reshaping, functional primitives and attention. Source-visible constructor parameters appear in structured operations when statically known.
+- Static image and video input recognition for PIL, torchvision and OpenCV; Hugging Face vision pipeline tasks; named vision-language model configurations (including LLaVA, Qwen-VL, BLIP, PaliGemma, Idefics, CLIP and SigLIP); processor image/video inputs, processor chat templates and model generation.
+- Notebook pipeline stages for neural network architecture, visual preprocessing and multimodal generation, plus a [vision-language guide](docs/vision_language_models.md).
+- Regression tests for model architecture, tensor primitives, visual inputs, VLM aliases and cross-cell context, and unrelated-code negative examples.
+
+### Fixed
+
+- Bare qualified imports such as `import torchvision.transforms` no longer duplicate submodule segments during name resolution. Explicit aliases continue to resolve to their full paths.
+- Expanded PyTorch optimizer detection to additional supported `torch.optim` classes, including RAdam, NAdam, RMSprop, LBFGS, SparseAdam and Adagrad.
+- Loss constructors including `nn.L1Loss` and `nn.KLDivLoss` are no longer mistaken for neural-network forward models; overlapping analyzers no longer emit duplicate loss configuration claims.
+
+### Notes
+
+- All semantics remain deterministic and source-grounded: ASTScribe does not execute PyTorch, download VLM weights, process actual image pixels or infer model quality from static code. The vocabulary is broad but not exhaustive.
+
 ## [0.10.1] - 2026-10-08
 
 ### Fixed
