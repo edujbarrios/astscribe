@@ -45,6 +45,7 @@ _STAGE_ORDER: tuple[tuple[str, str], ...] = (
 
 _OPERATION_STAGE = {
     "dataset_configuration": "dataset",
+    "vision_dataset_configuration": "dataset",
     "dataset_split": "dataset",
     "dataset_mapping": "dataset_preparation",
     "dataset_filter": "dataset_preparation",
@@ -52,6 +53,9 @@ _OPERATION_STAGE = {
     "dataset_selection": "dataset_preparation",
     "dataset_schema_transform": "dataset_preparation",
     "preprocessing_pipeline": "preprocessing",
+    "vision_functional_transform": "preprocessing",
+    "vision_image_io": "preprocessing",
+    "vision_typed_tensor": "preprocessing",
     "preprocessing_transform": "preprocessing",
     "tokenizer_configuration": "preprocessing",
     "processor_configuration": "preprocessing",
@@ -64,6 +68,8 @@ _OPERATION_STAGE = {
     "dataloader_configuration": "data_loading",
     "data_collator_configuration": "data_loading",
     "model_configuration": "model",
+    "vision_model_configuration": "model",
+    "vision_operator": "evaluation",
     "neural_layer_configuration": "model",
     "activation_configuration": "model",
     "tensor_creation": "preprocessing",
