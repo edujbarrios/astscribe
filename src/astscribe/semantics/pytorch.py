@@ -14,11 +14,21 @@ class SemanticOutput:
     claims: list[Claim]
 
 
-_OPTIMIZERS = {"torch.optim.Adam", "torch.optim.AdamW", "torch.optim.SGD"}
+_OPTIMIZERS = {
+    f"torch.optim.{name}"
+    for name in (
+        "Adadelta", "Adagrad", "Adam", "AdamW", "Adamax", "ASGD",
+        "LBFGS", "NAdam", "RAdam", "RMSprop", "Rprop", "SGD", "SparseAdam",
+    )
+}
 _LOSSES = {
-    "torch.nn.CrossEntropyLoss",
-    "torch.nn.MSELoss",
-    "torch.nn.BCEWithLogitsLoss",
+    f"torch.nn.{name}"
+    for name in (
+        "CrossEntropyLoss", "MSELoss", "BCEWithLogitsLoss",
+        "L1Loss", "SmoothL1Loss", "HuberLoss", "KLDivLoss", "NLLLoss",
+        "BCELoss", "CTCLoss", "CosineEmbeddingLoss", "TripletMarginLoss",
+        "MarginRankingLoss", "PoissonNLLLoss", "MultiMarginLoss",
+    )
 }
 _SCHEDULER_PREFIX = "torch.optim.lr_scheduler."
 _AUTOCAST_PATHS = {
