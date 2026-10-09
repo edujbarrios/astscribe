@@ -8,6 +8,7 @@ from astscribe.parser import ImportTable, ParsedSource, SymbolTable
 from astscribe.sir import Claim, Evidence, EvidenceLevel, Operation
 
 from .torchmetrics import is_metric_constructor
+from .torchvision import _MODEL_NAMES
 
 
 @dataclass(frozen=True)
@@ -23,17 +24,36 @@ _DATASETS = {
     "torchvision.datasets.MNIST",
     "torchvision.datasets.FashionMNIST",
 }
-_TRANSFORM_PREFIXES = ("torchvision.transforms.", "torchvision.transforms.v2.")
-_STOCHASTIC_TRANSFORMS = {
-    "RandomCrop",
-    "RandomHorizontalFlip",
-    "RandomResizedCrop",
-    "RandomRotation",
-    "RandomVerticalFlip",
-    "ColorJitter",
-    "RandomAffine",
+_TRANSFORM_NAMES = {
+    "Compose", "RandomApply", "RandomChoice", "RandomOrder", "Lambda",
+    "Resize", "CenterCrop", "RandomCrop", "RandomResizedCrop",
+    "RandomHorizontalFlip", "RandomVerticalFlip", "RandomRotation",
+    "RandomAffine", "RandomPerspective", "RandomErasing",
+    "RandomAdjustSharpness", "RandomAutocontrast", "RandomEqualize",
+    "RandomInvert", "RandomPosterize", "RandomSolarize",
+    "RandomGrayscale", "RandomPhotometricDistort", "RandomIoUCrop",
+    "RandomZoomOut", "RandomResize", "RandomShortestSize", "ScaleJitter",
+    "GaussianBlur", "GaussianNoise", "RandomChannelPermutation",
+    "ColorJitter", "ElasticTransform", "Pad", "FiveCrop", "TenCrop",
+    "ToTensor", "PILToTensor", "ToImage", "ToPILImage", "ToPureTensor",
+    "ToDtype", "ConvertImageDtype", "Normalize", "Grayscale", "RGB",
+    "AutoAugment", "RandAugment", "TrivialAugmentWide", "AugMix",
+    "CutMix", "MixUp", "JPEG", "SanitizeBoundingBoxes", "ClampBoundingBoxes",
+    "ConvertBoundingBoxFormat", "SanitizeKeyPoints", "ClampKeyPoints",
+    "SetClampingMode", "UniformTemporalSubsample", "Identity",
+    "LinearTransformation",
 }
-_MODEL_PREFIXES = ("torchvision.models.",)
+_STOCHASTIC_TRANSFORMS = {
+    "RandomCrop", "RandomHorizontalFlip", "RandomResizedCrop",
+    "RandomRotation", "RandomVerticalFlip", "ColorJitter", "RandomAffine",
+    "RandomPerspective", "RandomErasing", "RandomAdjustSharpness",
+    "RandomAutocontrast", "RandomEqualize", "RandomInvert",
+    "RandomPosterize", "RandomSolarize", "RandomGrayscale",
+    "RandomPhotometricDistort", "RandomIoUCrop", "RandomZoomOut",
+    "RandomResize", "RandomShortestSize", "ScaleJitter",
+    "RandomChannelPermutation", "AutoAugment", "RandAugment",
+    "TrivialAugmentWide", "AugMix", "CutMix", "MixUp",
+}
 _TORCH_MODULE_PREFIX = "torch.nn."
 
 
@@ -128,6 +148,19 @@ def _transform_name(path: str) -> str:
     return path.rsplit(".", 1)[-1]
 
 
+def _is_supported_transform(path: str) -> bool:
+    namespace = path.rsplit(".", 1)[0]
+    return namespace in {"torchvision.transforms", "torchvision.transforms.v2"} and (
+        _transform_name(path) in _TRANSFORM_NAMES
+    )
+
+
+def _is_supported_classification_model(path: str) -> bool:
+    return path.rsplit(".", 1)[0] == "torchvision.models" and (
+        _transform_name(path) in _MODEL_NAMES
+    )
+
+
 def _transform_sequence(call: ast.Call, imports: ImportTable) -> list[str]:
     if not call.args or not isinstance(call.args[0], ast.List | ast.Tuple):
         return []
@@ -136,7 +169,7 @@ def _transform_sequence(call: ast.Call, imports: ImportTable) -> list[str]:
         if not isinstance(element, ast.Call):
             continue
         path = _call_path(element, imports)
-        if path and path.startswith(_TRANSFORM_PREFIXES):
+        if path and _is_supported_transform(path):
             names.append(_transform_name(path))
     return names
 
@@ -288,7 +321,7 @@ def analyze_pytorch_experiment(
             claims.append(Claim(f"The dataset is partitioned with `random_split`{suffix}.", ev))
             continue
 
-        if path.startswith(_TRANSFORM_PREFIXES):
+        if _is_supported_transform(path):
             name = _transform_name(path)
             params = _keyword_values(parsed, node, symbols)
             ev = _evidence(parsed, node, EvidenceLevel.E3, "pytorch.preprocessing_transform")
@@ -351,7 +384,7 @@ def analyze_pytorch_experiment(
 
         target = assigned.get(id(node))
         if target and (
-            path.startswith(_MODEL_PREFIXES)
+            _is_supported_classification_model(path)
             or (path.startswith(_TORCH_MODULE_PREFIX) and target == "model")
         ):
             operation, claim = _model_claim(parsed, node, path, target, symbols)
