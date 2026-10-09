@@ -14,6 +14,7 @@ from .pytorch_ecosystem import analyze_pytorch_ecosystem
 from .pytorch_experiment import analyze_pytorch_experiment
 from .pytorch_networks import analyze_pytorch_networks
 from .pytorch_reproducibility import analyze_pytorch_reproducibility
+from .torchaudio import analyze_torchaudio
 from .torchvision import analyze_torchvision
 from .transformers import analyze_transformers
 from .transformers_models import analyze_transformers_models
@@ -49,6 +50,7 @@ class SemanticRegistry:
             "datasets": [cast(SemanticAnalyzer, analyze_datasets)],
             "peft": [cast(SemanticAnalyzer, analyze_peft)],
             "multimodal": [cast(SemanticAnalyzer, analyze_multimodal)],
+            "torchaudio": [cast(SemanticAnalyzer, analyze_torchaudio)],
             "torchvision": [cast(SemanticAnalyzer, analyze_torchvision)],
         }
 
