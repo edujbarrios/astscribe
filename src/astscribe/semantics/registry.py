@@ -16,6 +16,7 @@ from .pytorch_reproducibility import analyze_pytorch_reproducibility
 from .transformers import analyze_transformers
 from .transformers_models import analyze_transformers_models
 from .transformers_quantization import analyze_transformers_quantization
+from .torchvision import analyze_torchvision
 
 
 class SemanticOutputProtocol(Protocol):
@@ -46,6 +47,7 @@ class SemanticRegistry:
             "datasets": [cast(SemanticAnalyzer, analyze_datasets)],
             "peft": [cast(SemanticAnalyzer, analyze_peft)],
             "multimodal": [cast(SemanticAnalyzer, analyze_multimodal)],
+            "torchvision": [cast(SemanticAnalyzer, analyze_torchvision)],
         }
 
     def analyzers(self) -> dict[str, tuple[SemanticAnalyzer, ...]]:
