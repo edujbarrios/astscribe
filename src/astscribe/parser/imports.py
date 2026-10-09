@@ -23,21 +23,12 @@ class ImportTable:
 
 
 def build_import_table(tree: ast.Module) -> ImportTable:
-    table = ImportTable()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                table.aliases[alias.asname or alias.name.split(".")[0]] = (
-                    alias.name if alias.asname else alias.name.split(".")[0]
-                )
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            for alias in node.names:
-                if alias.name == "*":
-                    continue
-                local = alias.asname or alias.name
-                table.aliases[local] = f"{node.module}.{alias.name}"
-    return table
+    """Resolve only module-scope imports, dropping aliases shadowed in source order.
 
+    Imports inside functions, classes and conditional branches do not establish
+    unconditional module bindings. Unknown control flow is treated conservatively.
+    """
+    return update_import_table(tree)
 
 
 def update_import_table(
