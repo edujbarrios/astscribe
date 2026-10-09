@@ -7,6 +7,7 @@ from astscribe.parser import ImportTable, ParsedSource, SymbolTable
 from astscribe.sir import Claim, Operation
 
 from .datasets import analyze_datasets
+from .multimodal import analyze_multimodal
 from .peft import analyze_peft
 from .pytorch import analyze_pytorch
 from .pytorch_experiment import analyze_pytorch_experiment
@@ -44,6 +45,7 @@ class SemanticRegistry:
             ],
             "datasets": [cast(SemanticAnalyzer, analyze_datasets)],
             "peft": [cast(SemanticAnalyzer, analyze_peft)],
+            "multimodal": [cast(SemanticAnalyzer, analyze_multimodal)],
         }
 
     def analyzers(self) -> dict[str, tuple[SemanticAnalyzer, ...]]:
