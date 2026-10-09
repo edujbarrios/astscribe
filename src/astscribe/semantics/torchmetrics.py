@@ -94,7 +94,8 @@ def analyze_torchmetrics(
         text = ""
         if path.startswith("torchmetrics.functional."):
             name = path.rsplit(".", 1)[-1]
-            if name in _FUNCTIONAL and len(path.split(".")) in {3, 4}:
+            base_name = name.removeprefix("binary_").removeprefix("multiclass_").removeprefix("multilabel_")
+            if (name in _FUNCTIONAL or base_name in _FUNCTIONAL) and len(path.split(".")) in {3, 4}:
                 kind = "metric_computation"
                 text = f"The TorchMetrics functional operation {name} is invoked."
         elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
