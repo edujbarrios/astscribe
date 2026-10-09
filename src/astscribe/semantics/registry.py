@@ -10,6 +10,7 @@ from .datasets import analyze_datasets
 from .multimodal import analyze_multimodal
 from .peft import analyze_peft
 from .pytorch import analyze_pytorch
+from .pytorch_ecosystem import analyze_pytorch_ecosystem
 from .pytorch_experiment import analyze_pytorch_experiment
 from .pytorch_networks import analyze_pytorch_networks
 from .pytorch_reproducibility import analyze_pytorch_reproducibility
@@ -35,6 +36,7 @@ class SemanticRegistry:
             "pytorch": [
                 cast(SemanticAnalyzer, analyze_pytorch),
                 cast(SemanticAnalyzer, analyze_pytorch_experiment),
+                cast(SemanticAnalyzer, analyze_pytorch_ecosystem),
                 cast(SemanticAnalyzer, analyze_pytorch_networks),
                 cast(SemanticAnalyzer, analyze_pytorch_reproducibility),
             ],
