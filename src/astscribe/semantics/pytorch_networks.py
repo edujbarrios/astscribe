@@ -39,11 +39,6 @@ _ACTIVATIONS = {
     "GELU", "SiLU", "Mish", "Sigmoid", "Tanh", "Softmax", "LogSoftmax",
     "Softplus", "Hardswish", "Hardtanh",
 }
-_LOSSES = {
-    "L1Loss", "SmoothL1Loss", "HuberLoss", "KLDivLoss", "NLLLoss",
-    "BCELoss", "CTCLoss", "CosineEmbeddingLoss", "TripletMarginLoss",
-    "MarginRankingLoss", "PoissonNLLLoss", "MultiMarginLoss",
-}
 _FUNCTIONS = {
     "relu", "relu6", "leaky_relu", "gelu", "silu", "mish", "sigmoid",
     "tanh", "softmax", "log_softmax", "dropout", "layer_norm",
@@ -121,10 +116,6 @@ def analyze_pytorch_networks(
                 kind = "activation_configuration"
                 attributes = _values(node, symbols, subject)
                 message = f"A {subject} activation module is constructed."
-            elif subject in _LOSSES:
-                kind = "loss_configuration"
-                attributes = _values(node, symbols, subject)
-                message = f"A {subject} loss module is constructed."
         elif path.startswith("torch.nn.functional.") and path.count(".") == 3:
             if subject in _FUNCTIONS:
                 kind = "attention_operation" if subject == "scaled_dot_product_attention" else (
