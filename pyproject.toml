@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 authors = [{name = "Eduardo J. Barrios"}]
-keywords = ["ast", "pytorch", "jupyter", "static-analysis", "machine-learning", "scientific-computing", "computer-vision", "vision-language-models", "torchvision", "torchaudio", "audio-processing"]
+keywords = ["ast", "pytorch", "jupyter", "static-analysis", "machine-learning", "scientific-computing", "computer-vision", "vision-language-models", "torchvision", "torchaudio", "audio-processing", "torchcodec", "torchmetrics"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
