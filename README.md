@@ -291,11 +291,19 @@ would require **running an experiment**. ASTScribe does not measure accuracy,
 reproducibility or causal effects, and it cannot reconstruct hidden notebook
 execution order. Diagnostics are prompts for review, not proof of runtime errors.
 
-Supported static semantics include **PyTorch**, **Hugging Face Transformers**,
-**Hugging Face Datasets**, and **PEFT**, as well as composite techniques such
-as QLoRA. Common PyTorch neural-network modules and source-visible image/VLM workflows\nare recognized too; see the [vision-language guide](docs/vision_language_models.md).\nASTScribe cannot infer arbitrary dynamic values, actual execution
-order, hidden kernel history, or performance results. A diagnostic is a
-reason to inspect your code, not proof of a runtime error.
+Supported static semantics include **PyTorch**, **TorchVision**, **TorchAudio**,
+**Hugging Face Transformers**, **Hugging Face Datasets** and **PEFT**.
+This includes common neural architectures, tensor and autograd APIs, image
+transforms, vision datasets and operators, speech feature extraction, audio
+datasets and VLM workflows; see the
+[PyTorch ecosystem coverage guide](docs/pytorch_ecosystem_coverage.md),
+[vision-language guide](docs/vision_language_models.md) and
+[TorchAudio guide](docs/torchaudio.md).
+
+**Important:** ASTScribe recognizes a broad, curated set of operations, *not
+every symbol in these libraries*. It does not infer arbitrary dynamic values,
+actual execution order, hidden kernel history, model accuracy, image contents
+or audio contents. Unsupported APIs and dependency versions require review.
 
 See [technical documentation](docs/), [contributing](CONTRIBUTING.md)
 and [release notes](CHANGELOG.md). Apache-2.0 license: [LICENSE](LICENSE).

@@ -5,6 +5,25 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.11.1] - 2026-10-09
+
+### Added
+
+- Broader, import-resolved PyTorch semantics for graph compilation and export, TorchScript/FX, autograd/torch.func, distributed collectives, data sampling, parameter initialization, activation checkpointing, linalg/FFT/special functions, profiling, numerical settings, neural network modules and tensor operations.
+- Torchvision coverage across additional datasets, image classification, detection, segmentation, optical flow and video model constructors, bounding-box/NMS/RoI operators, image encoding/decoding, transforms v1/v2 functional APIs and typed image/video/box tensors.
+- TorchAudio coverage for load/save APIs, speech/music datasets, audio feature extraction and filtering, MFCC/MelSpectrogram, model constructors, pretrained pipeline bundles and Kaldi-compatible features. Accounts for the TorchAudio 2.9+ TorchCodec transition in documentation.
+- Cross-library notebook regression tests, pipeline stage coverage, aliased imports and negative cases that require framework provenance. New [ecosystem coverage guide](docs/pytorch_ecosystem_coverage.md) and [audio guide](docs/torchaudio.md).
+
+### Fixed
+
+- One-shot AST import resolution no longer treats function-local or conditional imports as unconditional globals, and clears aliases overridden by later module-level bindings. This avoids fabricated framework semantics for unrelated code.
+- README scope paragraph formatting.
+
+### Limitations
+
+- These are curated, evidence-backed API families, **not exhaustive API coverage**, complete Python control-flow interpretation, or runtime inference. Operations are reported as source-level calls without claiming successful execution, downloaded assets, actual pixel/audio contents or model results.
+- API availability can vary by framework version, particularly for TorchAudio 2.9+.
+
 ## [0.11.0] - 2026-10-09
 
 ### Added
