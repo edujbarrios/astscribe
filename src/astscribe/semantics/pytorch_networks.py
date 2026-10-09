@@ -39,7 +39,6 @@ _LAYERS = {
     "ReplicationPad1d", "ReplicationPad2d", "ReplicationPad3d",
     "ConstantPad1d", "ConstantPad2d", "ConstantPad3d",
     "ZeroPad1d", "ZeroPad2d", "CircularPad1d", "CircularPad2d", "CircularPad3d",
-    "TransformerEncoder", "TransformerDecoder",
     "LazyLinear", "LazyConv1d", "LazyConv2d", "LazyConv3d",
     "LazyBatchNorm1d", "LazyBatchNorm2d", "LazyBatchNorm3d",
 }
@@ -63,7 +62,7 @@ _FUNCTIONS = {
     "adaptive_max_pool1d", "adaptive_max_pool2d", "adaptive_max_pool3d",
     "conv_transpose1d", "conv_transpose2d", "conv_transpose3d",
     "max_pool1d", "max_pool3d", "avg_pool1d", "avg_pool3d",
-    "instance_norm", "scaled_dot_product_attention",
+    "instance_norm",
 }
 _TENSOR_FACTORIES = {
     "tensor", "as_tensor", "from_numpy", "zeros", "ones", "empty",
