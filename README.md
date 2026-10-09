@@ -292,13 +292,15 @@ reproducibility or causal effects, and it cannot reconstruct hidden notebook
 execution order. Diagnostics are prompts for review, not proof of runtime errors.
 
 Supported static semantics include **PyTorch**, **TorchVision**, **TorchAudio**,
-**Hugging Face Transformers**, **Hugging Face Datasets** and **PEFT**.
+**TorchCodec**, **TorchMetrics**, **Hugging Face Transformers**,
+**Hugging Face Datasets** and **PEFT**.
 This includes common neural architectures, tensor and autograd APIs, image
 transforms, vision datasets and operators, speech feature extraction, audio
 datasets and VLM workflows; see the
 [PyTorch ecosystem coverage guide](docs/pytorch_ecosystem_coverage.md),
 [vision-language guide](docs/vision_language_models.md) and
-[TorchAudio guide](docs/torchaudio.md).
+[TorchAudio guide](docs/torchaudio.md) and
+[TorchCodec guide](docs/torchcodec.md).
 
 **Important:** ASTScribe recognizes a broad, curated set of operations, *not
 every symbol in these libraries*. It does not infer arbitrary dynamic values,
