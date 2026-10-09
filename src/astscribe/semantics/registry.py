@@ -10,8 +10,8 @@ from .datasets import analyze_datasets
 from .multimodal import analyze_multimodal
 from .peft import analyze_peft
 from .pytorch import analyze_pytorch
-from .pytorch_experiment import analyze_pytorch_experiment
 from .pytorch_ecosystem import analyze_pytorch_ecosystem
+from .pytorch_experiment import analyze_pytorch_experiment
 from .pytorch_networks import analyze_pytorch_networks
 from .pytorch_reproducibility import analyze_pytorch_reproducibility
 from .transformers import analyze_transformers
