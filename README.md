@@ -293,7 +293,7 @@ execution order. Diagnostics are prompts for review, not proof of runtime errors
 
 Supported static semantics include **PyTorch**, **Hugging Face Transformers**,
 **Hugging Face Datasets**, and **PEFT**, as well as composite techniques such
-as QLoRA. ASTScribe cannot infer arbitrary dynamic values, actual execution
+as QLoRA. Common PyTorch neural-network modules and source-visible image/VLM workflows\nare recognized too; see the [vision-language guide](docs/vision_language_models.md).\nASTScribe cannot infer arbitrary dynamic values, actual execution
 order, hidden kernel history, or performance results. A diagnostic is a
 reason to inspect your code, not proof of a runtime error.
 
