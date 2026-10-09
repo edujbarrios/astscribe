@@ -33,6 +33,15 @@ _LAYERS = {
     "MultiheadAttention", "Transformer", "TransformerEncoder",
     "TransformerDecoder", "TransformerEncoderLayer", "TransformerDecoderLayer",
     "RNN", "GRU", "LSTM", "RNNCell", "GRUCell", "LSTMCell",
+    "Fold", "Unfold", "PixelShuffle", "PixelUnshuffle", "Upsample",
+    "UpsamplingNearest2d", "UpsamplingBilinear2d",
+    "ReflectionPad1d", "ReflectionPad2d", "ReflectionPad3d",
+    "ReplicationPad1d", "ReplicationPad2d", "ReplicationPad3d",
+    "ConstantPad1d", "ConstantPad2d", "ConstantPad3d",
+    "ZeroPad1d", "ZeroPad2d", "CircularPad1d", "CircularPad2d", "CircularPad3d",
+    "TransformerEncoder", "TransformerDecoder",
+    "LazyLinear", "LazyConv1d", "LazyConv2d", "LazyConv3d",
+    "LazyBatchNorm1d", "LazyBatchNorm2d", "LazyBatchNorm3d",
 }
 _ACTIVATIONS = {
     "ReLU", "ReLU6", "LeakyReLU", "PReLU", "ELU", "SELU",
@@ -45,14 +54,31 @@ _FUNCTIONS = {
     "batch_norm", "group_norm", "conv1d", "conv2d", "conv3d",
     "linear", "embedding", "max_pool2d", "avg_pool2d",
     "scaled_dot_product_attention", "interpolate", "pad",
+    "relu_", "glu", "elu", "selu", "hardswish", "hardshrink", "softplus",
+    "one_hot", "normalize", "cosine_similarity", "pairwise_distance",
+    "cross_entropy", "binary_cross_entropy", "binary_cross_entropy_with_logits",
+    "mse_loss", "l1_loss", "smooth_l1_loss", "huber_loss",
+    "nll_loss", "kl_div", "ctc_loss", "triplet_margin_loss",
+    "adaptive_avg_pool1d", "adaptive_avg_pool2d", "adaptive_avg_pool3d",
+    "adaptive_max_pool1d", "adaptive_max_pool2d", "adaptive_max_pool3d",
+    "conv_transpose1d", "conv_transpose2d", "conv_transpose3d",
+    "max_pool1d", "max_pool3d", "avg_pool1d", "avg_pool3d",
+    "instance_norm", "scaled_dot_product_attention",
 }
 _TENSOR_FACTORIES = {
     "tensor", "as_tensor", "from_numpy", "zeros", "ones", "empty",
     "full", "rand", "randn", "randint", "arange", "linspace",
     "eye", "zeros_like", "ones_like", "empty_like", "full_like",
-    "rand_like", "randn_like",
+    "rand_like", "randn_like", "randperm", "logspace", "empty_strided",
+    "sparse_coo_tensor", "sparse_csr_tensor",
 }
-_TENSOR_OPS = {"cat", "stack", "flatten", "reshape", "permute", "matmul", "bmm", "einsum"}
+_TENSOR_OPS = {"cat", "stack", "flatten", "reshape", "permute", "matmul", "bmm", "einsum",
+    "mm", "mv", "addmm", "baddbmm", "tensordot", "sort", "argsort", "topk",
+    "kthvalue", "unique", "where", "clamp", "split", "chunk", "unbind",
+    "gather", "scatter", "scatter_add", "index_select", "index_add",
+    "triu", "tril", "diag", "diagonal", "repeat_interleave",
+    "nan_to_num", "amin", "amax", "mean", "sum", "prod", "cumsum",
+    "cumprod", "median", "quantile", "std", "var"}
 _TENSOR_METHODS = {"view", "reshape", "permute", "transpose", "flatten", "unsqueeze", "squeeze"}
 _POSITIONAL = {
     "Linear": ("in_features", "out_features"),
