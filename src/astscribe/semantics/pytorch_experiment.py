@@ -7,6 +7,7 @@ from typing import Any
 from astscribe.parser import ImportTable, ParsedSource, SymbolTable
 from astscribe.sir import Claim, Evidence, EvidenceLevel, Operation
 
+from .torchmetrics import is_metric_constructor
 from .torchvision import _MODEL_NAMES
 
 
@@ -54,7 +55,6 @@ _STOCHASTIC_TRANSFORMS = {
     "TrivialAugmentWide", "AugMix", "CutMix", "MixUp",
 }
 _TORCH_MODULE_PREFIX = "torch.nn."
-_METRIC_PREFIXES = ("torchmetrics.",)
 
 
 def _dotted_name(node: ast.AST) -> str | None:
@@ -392,7 +392,7 @@ def analyze_pytorch_experiment(
             claims.append(claim)
             continue
 
-        if path.startswith(_METRIC_PREFIXES):
+        if is_metric_constructor(path):
             metric_name = path.rsplit(".", 1)[-1]
             target = assigned.get(id(node))
             params = _keyword_values(parsed, node, symbols)
