@@ -119,7 +119,15 @@ def _classify(path: str) -> tuple[str, str] | None:
             return ("vision_dataset_configuration", "A torchvision dataset constructor is invoked")
     if path.startswith("torchvision.models."):
         name = path.rsplit(".", 1)[-1]
-        if name in _MODEL_NAMES:
+        namespace = path.rsplit(".", 1)[0]
+        supported_namespaces = {
+            "torchvision.models",
+            "torchvision.models.detection",
+            "torchvision.models.segmentation",
+            "torchvision.models.video",
+            "torchvision.models.optical_flow",
+        }
+        if namespace in supported_namespaces and name in _MODEL_NAMES:
             return ("vision_model_configuration", "A torchvision model architecture is selected")
     if path.startswith("torchvision.ops.") and path.count(".") == 2:
         if path.rsplit(".", 1)[-1] in _OPS:
