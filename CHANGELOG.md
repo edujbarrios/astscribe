@@ -5,6 +5,26 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.11.2] - 2026-10-09
+
+### Added
+
+- Expanded evidence-based TorchVision transforms v2 support for detection, segmentation and video pipelines, including CutMix, MixUp, RandomIoUCrop, RandomPhotometricDistort, RandomZoomOut, SanitizeBoundingBoxes and other documented augmentations. Transform lists and original notebook cell evidence remain available.
+- Source-based **TorchCodec** coverage for image decoding, audio/video/WAV decoder construction, clip sampling, encoder configuration and bound decoder/encoder methods, including cross-cell usage. This supports current PyTorch media workflows without requiring media files or decoding.
+- **TorchMetrics** functional evaluation and stateful metric update, compute and reset semantics, with workflow metrics stages and observable parameter values.
+- New [TorchCodec guide](docs/torchcodec.md) and regression tests for TorchVision v2, media decoding/encoding, PyTorch notebook context, and metrics.
+
+### Fixed
+
+- Avoid fabricating torchvision transform constructors for functional calls or unknown namespaces.
+- Avoid falsely recognizing `torchvision.models.custom.resnet18` (or other unknown submodules) as valid model configurations.
+- Restrict TorchMetrics metric-configuration claims to a curated set of supported constructors instead of every `torchmetrics.*` call; functional metric computations are separately classified.
+- Preserve negative tests for unsupported symbols and stale notebook bindings.
+
+### Notes
+
+- These are curated static source rules, not a guarantee of complete API coverage, installed-package compatibility or execution success. Image and audio content is never inspected or inferred. No PyTorch, TorchVision, TorchAudio, TorchCodec or TorchMetrics runtime dependency is added.
+
 ## [0.11.1] - 2026-10-09
 
 ### Added
