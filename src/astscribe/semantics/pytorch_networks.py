@@ -87,7 +87,7 @@ def _values(call: ast.Call, symbols: SymbolTable, kind: str) -> dict[str, Any]:
             value = symbols.resolve_constant(keyword.value)
             if value is not None:
                 values[keyword.arg] = value
-    for name, arg in zip(_POSITIONAL.get(kind, ()), call.args):
+    for name, arg in zip(_POSITIONAL.get(kind, ()), call.args, strict=False):
         value = symbols.resolve_constant(arg)
         if value is not None:
             values.setdefault(name, value)
