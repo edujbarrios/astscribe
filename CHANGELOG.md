@@ -5,6 +5,22 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.11.3] - 2026-10-10
+
+### Fixed
+
+- Stop treating attributes accessed through dynamic call results as imported modules, constructors or loader functions. This prevents fabricated source-backed claims in Hugging Face and other ML analyses.
+- Preserve constant values on self-assignment and resolve constructor keyword arguments using values that precede target rebinding.
+
+### Improved
+
+- Preserve constructor provenance, keyword settings and original source evidence when assigning a constructor-backed variable to a new name, including across notebook cells.
+- Add regression tests for dynamic receiver false positives, direct imported loaders, rebinding and alias propagation.
+
+### Notes
+
+- Backwards-compatible static analysis update. Dynamic receivers stay unknown rather than being executed or inferred.
+
 ## [0.11.2] - 2026-10-09
 
 ### Added

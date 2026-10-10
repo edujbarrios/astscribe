@@ -62,7 +62,7 @@ def _dotted_name(node: ast.AST) -> str | None:
         return node.id
     if isinstance(node, ast.Attribute):
         parent = _dotted_name(node.value)
-        return f"{parent}.{node.attr}" if parent else node.attr
+        return f"{parent}.{node.attr}" if parent else None
     return None
 
 

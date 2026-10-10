@@ -68,7 +68,7 @@ def _dotted_name(node: ast.AST) -> str | None:
         return node.id
     if isinstance(node, ast.Attribute):
         parent = _dotted_name(node.value)
-        return f"{parent}.{node.attr}" if parent else node.attr
+        return f"{parent}.{node.attr}" if parent else None
     return None
 
 
@@ -124,7 +124,19 @@ def build_symbol_table(
             target, value = node.target, node.value
 
         name = target.id if isinstance(target, ast.Name) and value is not None else None
+        # Resolve the right-hand side before invalidating the target's old binding.
         previous_context = table.constructor_context(name) if name is not None else None
+        constant = table.resolve_constant(value) if name is not None and value is not None else None
+        referenced_context = (
+            table.constructor_context(value.id)
+            if name is not None and isinstance(value, ast.Name)
+            else None
+        )
+        call_arguments = (
+            _keyword_values(value, table)
+            if name is not None and isinstance(value, ast.Call)
+            else {}
+        )
 
         effects = collect_binding_effects(node)
         if effects.clears_all:
@@ -135,24 +147,28 @@ def build_symbol_table(
         if name is None or value is None:
             continue
 
-        constant = table.resolve_constant(value)
         if constant is not None:
             table.constants[name] = constant
             continue
 
-        if isinstance(value, ast.Call):
-            if _is_fluent_self_assignment(name, value) and previous_context is not None:
-                constructor, arguments, origin = previous_context
-                table.constructors[name] = constructor
-                table.constructor_arguments[name] = arguments
-                if origin is not None:
-                    table.constructor_origins[name] = origin
-                continue
+        # Aliases and fluent self-assignments retain the original constructor
+        # provenance; dynamically accessed attributes are not constructors.
+        context = referenced_context
+        if isinstance(value, ast.Call) and _is_fluent_self_assignment(name, value):
+            context = previous_context
+        if context is not None:
+            constructor, arguments, origin = context
+            table.constructors[name] = constructor
+            table.constructor_arguments[name] = arguments
+            if origin is not None:
+                table.constructor_origins[name] = origin
+            continue
 
+        if isinstance(value, ast.Call):
             called = _dotted_name(value.func)
             if called:
                 table.constructors[name] = imports.resolve_dotted(called)
-                table.constructor_arguments[name] = _keyword_values(value, table)
+                table.constructor_arguments[name] = call_arguments
                 table.constructor_origins[name] = SymbolOrigin(
                     source=(ast.get_source_segment(source, value) or "") if source else "",
                     line_start=getattr(value, "lineno", None),
