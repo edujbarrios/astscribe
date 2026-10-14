@@ -85,6 +85,7 @@ class NotebookAnalyzer:
         data: object,
         *,
         skip_invalid_python: bool = True,
+        registry: SemanticRegistry | None = None,
     ) -> NotebookAnalyzer:
         """Build an analyzer from an already-decoded Jupyter notebook document."""
 
