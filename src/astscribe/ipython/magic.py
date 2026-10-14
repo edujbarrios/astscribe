@@ -23,6 +23,11 @@ def _history_context(history: Sequence[str], *, before: int) -> NotebookAnalyzer
         source = history[cell_index]
         if not source.strip():
             continue
+        # ASTScribe magics only inspect source and do not execute their body.
+        # Unlike arbitrary IPython magics, they cannot invalidate Python bindings.
+        command = source.lstrip().split(None, 1)[0]
+        if command in {"%scribe", "%%scribe"}:
+            continue
         try:
             analyzer.add_cell(source, cell_index=cell_index)
         except SyntaxError:
