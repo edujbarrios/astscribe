@@ -37,5 +37,5 @@ def test_cross_cell_rebind_does_not_change_prior_cell_explanation() -> None:
 
 
 def test_reassigned_constructor_between_statements_is_not_reused() -> None:
-    result = analyze("from torch import nn\ncriterion = nn.CrossEntropyLoss()\nloss1 = criterion(x, y)\ncriterion = custom\nloss2 = criterion(x, y)")
+    result = analyze("from torch import nn\nloss_fn = nn.CrossEntropyLoss()\nloss1 = loss_fn(x, y)\nloss_fn = custom\nloss2 = loss_fn(x, y)")
     assert sum(op.kind == "loss_computation" for op in result.operations) == 1
