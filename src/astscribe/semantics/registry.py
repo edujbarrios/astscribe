@@ -58,6 +58,14 @@ class SemanticRegistry:
             "torchmetrics": [cast(SemanticAnalyzer, analyze_torchmetrics)],
         }
 
+    def register(self, framework: str, analyzer: SemanticAnalyzer) -> None:
+        """Register a custom analyzer on this registry instance."""
+        if not isinstance(framework, str) or not framework.strip():
+            raise ValueError("framework must be a non-empty string.")
+        if not callable(analyzer):
+            raise TypeError("analyzer must be callable.")
+        self._analyzers.setdefault(framework, []).append(analyzer)
+
     def analyzers(self) -> dict[str, tuple[SemanticAnalyzer, ...]]:
         return {
             framework: tuple(analyzers)
