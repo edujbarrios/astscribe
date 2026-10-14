@@ -204,14 +204,29 @@ def build_impact_report(
 def rank_cells_by_impact(
     graph: NotebookDependencyGraph,
 ) -> tuple[CellImpactSummary, ...]:
-    summaries = [
-        CellImpactSummary(
-            cell=node.cell,
-            direct_dependents=len(graph.children(node.cell)),
-            affected_cells=build_impact_report(graph, node.cell).blast_radius,
+    """Compute downstream reachability once per DAG node.
+
+    Dependency graph edges point from earlier to later source cells, so a
+    reverse-order pass reuses already-computed descendants. No impact path
+    reconstruction is needed when only ranking counts are requested.
+    """
+    outgoing = _outgoing_edges(graph)
+    descendants: dict[int, set[int]] = {}
+    summaries: list[CellImpactSummary] = []
+    for node in sorted(graph.nodes, key=lambda item: item.cell, reverse=True):
+        children = outgoing.get(node.cell, ())
+        reached: set[int] = set()
+        for edge in children:
+            reached.add(edge.consumer_cell)
+            reached.update(descendants.get(edge.consumer_cell, set()))
+        descendants[node.cell] = reached
+        summaries.append(
+            CellImpactSummary(
+                cell=node.cell,
+                direct_dependents=len(children),
+                affected_cells=len(reached),
+            )
         )
-        for node in graph.nodes
-    ]
     return tuple(
         sorted(
             summaries,
