@@ -23,6 +23,7 @@ from astscribe.parser import (
     update_import_table,
 )
 from astscribe.pipeline import ExperimentPipeline, build_experiment_pipeline
+from astscribe.semantics import SemanticRegistry
 from astscribe.sir import AnalysisResult
 from astscribe.techniques import TechniqueFinding, detect_techniques, render_techniques
 
@@ -43,6 +44,7 @@ class NotebookAnalyzer:
     bindings established by previous cells. Later cells never affect earlier analyses.
     """
 
+    _registry: SemanticRegistry | None = field(default=None, repr=False)
     _imports: ImportTable = field(default_factory=ImportTable)
     _symbols: SymbolTable = field(default_factory=SymbolTable)
     _cells: list[str] = field(default_factory=list)
@@ -52,8 +54,10 @@ class NotebookAnalyzer:
     _next_cell_index: int = 0
 
     @classmethod
-    def from_cells(cls, cells: list[str]) -> NotebookAnalyzer:
-        analyzer = cls()
+    def from_cells(
+        cls, cells: list[str], *, registry: SemanticRegistry | None = None
+    ) -> NotebookAnalyzer:
+        analyzer = cls(_registry=registry)
         for cell in cells:
             analyzer.add_cell(cell)
         return analyzer
@@ -64,13 +68,16 @@ class NotebookAnalyzer:
         path: str | Path,
         *,
         skip_invalid_python: bool = True,
+        registry: SemanticRegistry | None = None,
     ) -> NotebookAnalyzer:
         """Load code cells from a Jupyter ``.ipynb`` file using only the standard library."""
 
         notebook_path = Path(path)
         with notebook_path.open("r", encoding="utf-8-sig") as handle:
             data = json.load(handle)
-        return cls.from_ipynb_data(data, skip_invalid_python=skip_invalid_python)
+        return cls.from_ipynb_data(
+            data, skip_invalid_python=skip_invalid_python, registry=registry
+        )
 
     @classmethod
     def from_ipynb_data(
@@ -88,7 +95,7 @@ class NotebookAnalyzer:
         if not isinstance(cells, list):
             raise ValueError("Invalid notebook: expected a top-level 'cells' list.")
 
-        analyzer = cls()
+        analyzer = cls(_registry=registry)
         for notebook_index, cell in enumerate(cells):
             if not isinstance(cell, dict):
                 reason = "cell is not an object"
@@ -169,7 +176,7 @@ class NotebookAnalyzer:
             cell=context_index,
         )
 
-        result = _analyze_parsed(parsed, imports, symbols)
+        result = _analyze_parsed(parsed, imports, symbols, self._registry)
         self._imports = imports
         self._symbols = symbols
         self._cells.append(source)
