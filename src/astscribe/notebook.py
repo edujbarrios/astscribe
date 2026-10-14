@@ -50,6 +50,7 @@ class NotebookAnalyzer:
     _results: list[AnalysisResult] = field(default_factory=list)
     _skipped_cells: list[SkippedCell] = field(default_factory=list)
     _next_cell_index: int = 0
+    _graph_cache: NotebookDependencyGraph | None = field(default=None, repr=False)
 
     @classmethod
     def from_cells(cls, cells: list[str]) -> NotebookAnalyzer:
@@ -146,6 +147,7 @@ class NotebookAnalyzer:
         """Discard inferred bindings after unsupported code with unknown side effects."""
         self._imports = ImportTable()
         self._symbols = SymbolTable()
+        self._graph_cache = None
 
     def add_cell(self, source: str, *, cell_index: int | None = None) -> AnalysisResult:
         if cell_index is None:
@@ -175,6 +177,7 @@ class NotebookAnalyzer:
         self._cells.append(source)
         self._cell_indices.append(context_index)
         self._results.append(result)
+        self._graph_cache = None
         self._next_cell_index = context_index + 1
         return result
 
@@ -276,10 +279,12 @@ class NotebookAnalyzer:
     def dependency_graph(self) -> NotebookDependencyGraph:
         """Build a static symbol-flow graph between analyzed notebook cells."""
 
-        cells = tuple(zip(self._cell_indices, self._cells, strict=True))
-        return build_dependency_graph(
-            cells, barriers=tuple(item.index for item in self._skipped_cells)
-        )
+        if self._graph_cache is None:
+            cells = tuple(zip(self._cell_indices, self._cells, strict=True))
+            self._graph_cache = build_dependency_graph(
+                cells, barriers=tuple(item.index for item in self._skipped_cells)
+            )
+        return self._graph_cache
 
     def render_dependency_graph(self) -> str:
         """Render cross-cell symbol dependencies as deterministic text."""
