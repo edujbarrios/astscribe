@@ -62,6 +62,26 @@ def _analyze_parsed(
         if framework_detected:
             result.frameworks.append(framework)
 
+    # A context manager is recognized by the legacy whole-tree visitor
+    # before sibling call expressions. Keep that evidence ordering stable in
+    # scientific/README output after splitting the source into statements.
+    context_rules = {"pytorch.no_grad", "pytorch.inference_mode", "pytorch.autocast"}
+    result.claims.sort(key=lambda claim: 0 if claim.rule in context_rules else 1)
+
+    # A binding configured in a prior notebook cell may be referenced several
+    # times in this cell, but its contextual evidence must be reported once.
+    unique_claims = []
+    seen_claims: set[tuple[str, str, int | None, int | None, str]] = set()
+    for claim in result.claims:
+        key = (
+            claim.rule, claim.evidence.source, claim.evidence.cell,
+            claim.evidence.line_start, claim.text,
+        )
+        if key not in seen_claims:
+            seen_claims.add(key)
+            unique_claims.append(claim)
+    result.claims = unique_claims
+
     result.training_step = detect_training_step(result.operations)
     result.inference = detect_inference(result.operations)
     return result, current_imports, current_symbols
