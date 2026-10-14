@@ -10,6 +10,7 @@ from .impact import CellImpactSummary, ImpactHop, ImpactPath, NotebookImpactRepo
 from .methodology import MethodologyReport, MethodologySection
 from .notebook import NotebookAnalyzer, SkippedCell
 from .pipeline import ExperimentPipeline, PipelineStage
+from .semantics import SemanticRegistry
 from .sir import AnalysisResult
 
 __version__ = "0.11.3"
@@ -31,6 +32,7 @@ __all__ = [
     "NotebookImpactReport",
     "PipelineStage",
     "SkippedCell",
+    "SemanticRegistry",
     "SymbolRedefinition",
     "analyze",
     "explain",

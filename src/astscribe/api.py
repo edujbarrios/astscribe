@@ -9,7 +9,7 @@ from astscribe.parser import (
     parse_source,
 )
 from astscribe.patterns import detect_inference, detect_training_step
-from astscribe.semantics import DEFAULT_REGISTRY
+from astscribe.semantics import DEFAULT_REGISTRY, SemanticRegistry
 from astscribe.sir import AnalysisResult
 
 
@@ -17,9 +17,11 @@ def _analyze_parsed(
     parsed: ParsedSource,
     imports: ImportTable,
     symbols: SymbolTable,
+    registry: SemanticRegistry | None = None,
 ) -> AnalysisResult:
     result = AnalysisResult(source=parsed.source)
-    for framework, analyzers in DEFAULT_REGISTRY.analyzers().items():
+    selected_registry = registry if registry is not None else DEFAULT_REGISTRY
+    for framework, analyzers in selected_registry.analyzers().items():
         framework_detected = False
         for analyzer in analyzers:
             semantic = analyzer(parsed, imports, symbols)
@@ -35,11 +37,11 @@ def _analyze_parsed(
     return result
 
 
-def analyze(source: str) -> AnalysisResult:
+def analyze(source: str, *, registry: SemanticRegistry | None = None) -> AnalysisResult:
     parsed = parse_source(source)
     imports = build_import_table(parsed.tree)
     symbols = build_symbol_table(parsed.tree, imports, source=source)
-    return _analyze_parsed(parsed, imports, symbols)
+    return _analyze_parsed(parsed, imports, symbols, registry)
 
 
 def explain(
@@ -47,6 +49,7 @@ def explain(
     style: str = "scientific",
     *,
     return_result: bool = False,
+    registry: SemanticRegistry | None = None,
 ) -> str | AnalysisResult:
-    result = analyze(source)
+    result = analyze(source, registry=registry)
     return result if return_result else result.render(style)
