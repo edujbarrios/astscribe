@@ -15,13 +15,7 @@ from astscribe.impact import (
     render_impact_ranking,
 )
 from astscribe.methodology import MethodologyReport, build_methodology_report
-from astscribe.parser import (
-    ImportTable,
-    SymbolTable,
-    build_symbol_table,
-    parse_source,
-    update_import_table,
-)
+from astscribe.parser import ImportTable, SymbolTable, parse_source
 from astscribe.pipeline import ExperimentPipeline, build_experiment_pipeline
 from astscribe.semantics import SemanticRegistry
 from astscribe.sir import AnalysisResult
@@ -170,16 +164,9 @@ class NotebookAnalyzer:
 
         parsed = parse_source(source, cell=context_index)
 
-        imports = update_import_table(parsed.tree, base=self._imports)
-        symbols = build_symbol_table(
-            parsed.tree,
-            imports,
-            base=self._symbols,
-            source=source,
-            cell=context_index,
+        result, imports, symbols = _analyze_parsed(
+            parsed, self._imports, self._symbols, self._registry
         )
-
-        result = _analyze_parsed(parsed, imports, symbols, self._registry)
         self._imports = imports
         self._symbols = symbols
         self._cells.append(source)
