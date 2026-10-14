@@ -334,6 +334,26 @@ class _EventCollector(ast.NodeVisitor):
             for statement in case.body:
                 self.visit(statement)
 
+    def visit_If(self, node: ast.If) -> None:
+        self.visit(node.test)
+        if isinstance(node.test, ast.Constant) and type(node.test.value) is bool:
+            body = node.body if node.test.value else node.orelse
+            for statement in body:
+                self.visit(statement)
+            return
+        # Unknown branch conditions are not assumed to be true or false.
+        for statement in (*node.body, *node.orelse):
+            self.visit(statement)
+
+    def visit_While(self, node: ast.While) -> None:
+        self.visit(node.test)
+        if isinstance(node.test, ast.Constant) and node.test.value is False:
+            for statement in node.orelse:
+                self.visit(statement)
+            return
+        for statement in (*node.body, *node.orelse):
+            self.visit(statement)
+
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         for decorator in node.decorator_list:
             self.visit(decorator)
