@@ -5,6 +5,33 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.12.0] - 2026-10-14
+
+### Added
+
+- A public `SemanticRegistry.register()` extension API, and optional registries for `analyze()`, `explain()` and notebook analyzers. This enables explicit custom analyzers without changing the default registry.
+- `astscribe experiment.ipynb --report cell --cell 7` to explain an original notebook cell from the CLI, including `--json` and rendering styles.
+- Source-order regression tests covering reassignment, alias provenance, canonical framework shadowing, constant values, and notebook analyses.
+
+### Fixed
+
+- Resolve imports, constructors and known constant values at the statement where semantic operations occur instead of using the end-of-cell state. Prevent earlier calls from inheriting later imports or rebindings.
+- Avoid framework claims for canonical imported modules after they are shadowed and restore them on explicit reimport.
+- Handle fixed-shape tuple/list unpacking and chained assignments conservatively, preserving original RHS values during parallel swaps.
+- Avoid phantom dependency edges from unreachable constant-false branches, including `while False`.
+- Preserve known notebook history context when ASTScribe's own read-only line and cell magics are used.
+
+### Performance
+
+- Cache notebook dependency graphs until new cells invalidate them.
+- Compute blast-radius rankings with reverse graph reachability rather than repeatedly reconstructing full impact reports.
+
+### Notes
+
+- ML code is never executed. Static source evidence and notebook warnings do not establish actual runtime behavior or experimental outcomes.
+- Analysis remains conservative for dynamic control flow and unknown receiver provenance.
+- Eight reviewed change PRs: #41, #42, #43, #44, #45, #46, #47, #48.
+
 ## [0.11.3] - 2026-10-10
 
 ### Fixed
