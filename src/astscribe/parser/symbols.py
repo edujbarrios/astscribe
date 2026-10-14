@@ -105,6 +105,32 @@ def _is_fluent_self_assignment(name: str, value: ast.Call) -> bool:
     )
 
 
+def _bound_values(node: ast.stmt) -> list[tuple[str, ast.AST]]:
+    """Extract safe name/value pairs from parallel assignments."""
+    def unpack(target: ast.AST, value: ast.AST) -> list[tuple[str, ast.AST]]:
+        if isinstance(target, ast.Name):
+            return [(target.id, value)]
+        if (
+            isinstance(target, (ast.Tuple, ast.List))
+            and isinstance(value, (ast.Tuple, ast.List))
+            and len(target.elts) == len(value.elts)
+        ):
+            pairs: list[tuple[str, ast.AST]] = []
+            for child, item in zip(target.elts, value.elts, strict=True):
+                pairs.extend(unpack(child, item))
+            return pairs
+        return []
+
+    if isinstance(node, ast.Assign):
+        pairs: list[tuple[str, ast.AST]] = []
+        for target in node.targets:
+            pairs.extend(unpack(target, node.value))
+        return pairs
+    if isinstance(node, ast.AnnAssign) and node.value is not None:
+        return unpack(node.target, node.value)
+    return []
+
+
 def build_symbol_table(
     tree: ast.Module,
     imports: ImportTable,
@@ -116,27 +142,23 @@ def build_symbol_table(
     table = base.copy() if base is not None else SymbolTable()
 
     for node in tree.body:
-        target: ast.AST | None = None
-        value: ast.AST | None = None
-        if isinstance(node, ast.Assign) and len(node.targets) == 1:
-            target, value = node.targets[0], node.value
-        elif isinstance(node, ast.AnnAssign):
-            target, value = node.target, node.value
-
-        name = target.id if isinstance(target, ast.Name) and value is not None else None
-        # Resolve the right-hand side before invalidating the target's old binding.
-        previous_context = table.constructor_context(name) if name is not None else None
-        constant = table.resolve_constant(value) if name is not None and value is not None else None
-        referenced_context = (
-            table.constructor_context(value.id)
-            if name is not None and isinstance(value, ast.Name)
-            else None
-        )
-        call_arguments = (
-            _keyword_values(value, table)
-            if name is not None and isinstance(value, ast.Call)
-            else {}
-        )
+        # Evaluate every RHS before invalidating any assignment target.
+        # In a parallel swap, both RHS values refer to the original bindings.
+        prepared: list[tuple[str, ast.AST, Any, Any, dict[str, Any], str | None]] = []
+        for name, value in _bound_values(node):
+            constant = table.resolve_constant(value)
+            context = (
+                table.constructor_context(value.id)
+                if isinstance(value, ast.Name)
+                else None
+            )
+            if isinstance(value, ast.Call) and _is_fluent_self_assignment(name, value):
+                context = table.constructor_context(name)
+            call_arguments = (
+                _keyword_values(value, table) if isinstance(value, ast.Call) else {}
+            )
+            called = _dotted_name(value.func) if isinstance(value, ast.Call) else None
+            prepared.append((name, value, constant, context, call_arguments, called))
 
         effects = collect_binding_effects(node)
         if effects.clears_all:
@@ -144,28 +166,17 @@ def build_symbol_table(
         for rebound in effects.names:
             _forget_symbol(table, rebound)
 
-        if name is None or value is None:
-            continue
-
-        if constant is not None:
-            table.constants[name] = constant
-            continue
-
-        # Aliases and fluent self-assignments retain the original constructor
-        # provenance; dynamically accessed attributes are not constructors.
-        context = referenced_context
-        if isinstance(value, ast.Call) and _is_fluent_self_assignment(name, value):
-            context = previous_context
-        if context is not None:
-            constructor, arguments, origin = context
-            table.constructors[name] = constructor
-            table.constructor_arguments[name] = arguments
-            if origin is not None:
-                table.constructor_origins[name] = origin
-            continue
-
-        if isinstance(value, ast.Call):
-            called = _dotted_name(value.func)
+        for name, value, constant, context, call_arguments, called in prepared:
+            if constant is not None:
+                table.constants[name] = constant
+                continue
+            if context is not None:
+                constructor, arguments, origin = context
+                table.constructors[name] = constructor
+                table.constructor_arguments[name] = arguments
+                if origin is not None:
+                    table.constructor_origins[name] = origin
+                continue
             if called:
                 table.constructors[name] = imports.resolve_dotted(called)
                 table.constructor_arguments[name] = call_arguments
