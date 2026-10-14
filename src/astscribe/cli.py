@@ -37,6 +37,7 @@ def _parser() -> argparse.ArgumentParser:
             "dependencies",
             "diagnostics",
             "impact",
+            "cell",
             "ranking",
         ),
         default="methodology",
@@ -97,6 +98,10 @@ def _notebook_payload(notebook: NotebookAnalyzer, args: argparse.Namespace) -> A
         return notebook.diagnostics().to_dict()
     if args.report == "ranking":
         return {"items": [summary.to_dict() for summary in notebook.impact_ranking()]}
+    if args.report == "cell":
+        if args.cell is None:
+            raise ValueError("--cell is required when --report cell is selected")
+        return notebook.analyze_notebook_cell(args.cell).to_dict()
     if args.cell is None:
         raise ValueError("--cell is required when --report impact is selected")
     return notebook.impact(args.cell).to_dict()
@@ -121,6 +126,10 @@ def _render_notebook(notebook: NotebookAnalyzer, args: argparse.Namespace) -> st
         return notebook.render_diagnostics()
     if args.report == "ranking":
         return notebook.render_impact_ranking()
+    if args.report == "cell":
+        if args.cell is None:
+            raise ValueError("--cell is required when --report cell is selected")
+        return notebook.explain_notebook_cell(args.cell, style=args.style)
     if args.cell is None:
         raise ValueError("--cell is required when --report impact is selected")
     return notebook.render_impact(args.cell)
@@ -136,8 +145,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise ValueError("--dot is only supported with notebook --report dependencies")
         if args.fail_on_warning and not is_notebook:
             raise ValueError("--fail-on-warning is only supported for notebooks")
-        if args.cell is not None and (not is_notebook or args.report != "impact"):
-            raise ValueError("--cell is only supported with notebook --report impact")
+        if args.cell is not None and (not is_notebook or args.report not in {"impact", "cell"}):
+            raise ValueError("--cell is only supported with notebook --report impact or cell")
         if not is_notebook and args.report != "methodology":
             raise ValueError("--report is only supported for notebooks")
         if args.evidence and (not is_notebook or args.report not in {"overview", "methodology"} or args.json):
