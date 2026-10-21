@@ -5,6 +5,21 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.13.0] - 2026-10-21
+
+### Fixed
+
+- Avoid incorrect PyTorch semantic claims for variables named `optimizer`, `scheduler`, `scaler`, `model` or `criterion` when their known constructor type is incompatible with those operations (#51).
+- Invalidate stale constructor provenance after a self-reassignment using an unknown method such as `model = model.state_dict()`. Preserve valid fluent PyTorch-style methods and recognized Hugging Face Dataset transformations (#50).
+- Exclude semantic operations and inferred symbol bindings from provably unreachable literal branches (`if False`, dead `else`, `while False`), while maintaining original evidence line locations (#52).
+
+### Tests and compatibility
+
+- Added regression coverage for stale constructor context, type-incompatible receiver names, conditional branches, and source evidence locations.
+- Retained legacy name-based PyTorch inference when receiver constructor provenance is unknown, and preserved Dataset map/shuffle analysis.
+- No runtime execution of analyzed code, new third-party dependencies, or CLI breaking changes.
+- Source-level analysis of unknown dynamic control flow remains conservative.
+
 ## [0.12.0] - 2026-10-14
 
 ### Added
