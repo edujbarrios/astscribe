@@ -97,11 +97,36 @@ def _clear_symbol_table(table: SymbolTable) -> None:
     table.constructor_origins.clear()
 
 
-def _is_fluent_self_assignment(name: str, value: ast.Call) -> bool:
-    return (
-        isinstance(value.func, ast.Attribute)
-        and isinstance(value.func.value, ast.Name)
-        and value.func.value.id == name
+# These PyTorch-style methods retain the receiver's semantic type.
+# Unknown methods (e.g. state_dict()) may return an unrelated object.
+_SELF_RETURNING_METHODS = frozenset({
+    "to", "cpu", "cuda", "float", "double", "half", "bfloat16",
+    "train", "eval", "requires_grad_", "share_memory",
+})
+# Hugging Face Dataset transformations return another Dataset with equivalent
+# provenance even though they are not identity-preserving operations.
+_DATASET_TRANSFORMS = frozenset({
+    "map", "filter", "shuffle", "select", "sort", "flatten",
+    "rename_column", "rename_columns", "remove_columns",
+    "select_columns", "cast", "cast_column", "add_column",
+    "with_format", "with_transform",
+})
+
+
+def _is_fluent_self_assignment(name: str, value: ast.Call, table: SymbolTable) -> bool:
+    if (
+        not isinstance(value.func, ast.Attribute)
+        or not isinstance(value.func.value, ast.Name)
+        or value.func.value.id != name
+    ):
+        return False
+    if value.func.attr in _SELF_RETURNING_METHODS:
+        return True
+    constructor = table.resolve_constructor(name)
+    return bool(
+        constructor
+        and constructor.startswith("datasets.")
+        and value.func.attr in _DATASET_TRANSFORMS
     )
 
 
@@ -152,7 +177,7 @@ def build_symbol_table(
                 if isinstance(value, ast.Name)
                 else None
             )
-            if isinstance(value, ast.Call) and _is_fluent_self_assignment(name, value):
+            if isinstance(value, ast.Call) and _is_fluent_self_assignment(name, value, table):
                 context = table.constructor_context(name)
             call_arguments = (
                 _keyword_values(value, table) if isinstance(value, ast.Call) else {}
