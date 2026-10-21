@@ -97,11 +97,20 @@ def _clear_symbol_table(table: SymbolTable) -> None:
     table.constructor_origins.clear()
 
 
+# Only these well-understood instance methods are known to return the receiver.
+# Unknown method calls may return entirely different objects (e.g. state_dict()).
+_SELF_RETURNING_METHODS = frozenset({
+    "to", "cpu", "cuda", "float", "double", "half", "bfloat16",
+    "train", "eval", "requires_grad_", "share_memory",
+})
+
+
 def _is_fluent_self_assignment(name: str, value: ast.Call) -> bool:
     return (
         isinstance(value.func, ast.Attribute)
         and isinstance(value.func.value, ast.Name)
         and value.func.value.id == name
+        and value.func.attr in _SELF_RETURNING_METHODS
     )
 
 
