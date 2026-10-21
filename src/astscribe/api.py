@@ -10,6 +10,7 @@ from astscribe.parser import (
     parse_source,
     update_import_table,
 )
+from astscribe.parser.reachability import prune_statically_unreachable
 from astscribe.patterns import detect_inference, detect_training_step
 from astscribe.semantics import DEFAULT_REGISTRY, SemanticRegistry
 from astscribe.sir import AnalysisResult
@@ -30,7 +31,10 @@ def _analyze_parsed(
     current_imports = imports.copy()
     current_symbols = symbols.copy()
 
-    for statement in parsed.tree.body:
+    # Use the same proven-unreachable branch policy for semantic rules and
+    # source-order symbol tracking; preserve original AST source locations.
+    effective_tree = prune_statically_unreachable(parsed.tree)
+    for statement in effective_tree.body:
         single = ParsedSource(
             source=parsed.source,
             tree=ast.Module(body=[statement], type_ignores=[]),
