@@ -148,41 +148,40 @@ def _optimizer_binding_claim(
 def _known_model_call(node: ast.Call, symbols: SymbolTable) -> bool:
     if not isinstance(node.func, ast.Name):
         return False
-    if node.func.id == "model":
-        return True
     constructor = symbols.resolve_constructor(node.func.id)
-    return bool(
-        constructor
-        and constructor.startswith("torch.nn.")
-        and constructor not in _LOSSES
-    )
+    if constructor is not None:
+        return constructor.startswith("torch.nn.") and constructor not in _LOSSES
+    # Preserve the conventional name fallback only if no contradictory type is known.
+    return node.func.id == "model"
 
 
 def _known_loss_call(node: ast.Call, symbols: SymbolTable) -> bool:
     if not isinstance(node.func, ast.Name):
         return False
-    if node.func.id == "criterion":
-        return True
     constructor = symbols.resolve_constructor(node.func.id)
-    return constructor in _LOSSES
+    if constructor is not None:
+        return constructor in _LOSSES
+    return node.func.id == "criterion"
 
 
 def _is_optimizer_subject(node: ast.AST, symbols: SymbolTable) -> bool:
     root = _root_name(node)
     constructor = _constructor_for_subject(node, symbols)
-    return root == "optimizer" or constructor in _OPTIMIZERS
+    return constructor in _OPTIMIZERS or (root == "optimizer" and constructor is None)
 
 
 def _is_scheduler_subject(node: ast.AST, symbols: SymbolTable) -> bool:
     root = _root_name(node)
     constructor = _constructor_for_subject(node, symbols)
-    return root == "scheduler" or bool(constructor and constructor.startswith(_SCHEDULER_PREFIX))
+    return bool(constructor and constructor.startswith(_SCHEDULER_PREFIX)) or (
+        root == "scheduler" and constructor is None
+    )
 
 
 def _is_scaler_subject(node: ast.AST, symbols: SymbolTable) -> bool:
     root = _root_name(node)
     constructor = _constructor_for_subject(node, symbols)
-    return root == "scaler" or constructor in _GRAD_SCALERS
+    return constructor in _GRAD_SCALERS or (root == "scaler" and constructor is None)
 
 
 def _device_label(node: ast.AST, symbols: SymbolTable) -> str | None:
