@@ -1,4 +1,5 @@
 from .api import analyze, explain
+from .audit import AuditFinding, NotebookAuditReport
 from .dependency import (
     CellDependencyEdge,
     CellDependencyNode,
@@ -19,6 +20,7 @@ __version__ = "0.13.0"
 
 __all__ = [
     "AnalysisResult",
+    "AuditFinding",
     "CellDependencyEdge",
     "CellDependencyNode",
     "CellImpactSummary",
@@ -31,6 +33,7 @@ __all__ = [
     "MethodologyReport",
     "MethodologySection",
     "NotebookAnalyzer",
+    "NotebookAuditReport",
     "NotebookDependencyGraph",
     "NotebookDiagnostic",
     "NotebookDiagnostics",
