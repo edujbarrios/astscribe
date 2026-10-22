@@ -39,6 +39,7 @@ def _parser() -> argparse.ArgumentParser:
             "impact",
             "cell",
             "ranking",
+            "imports",
             "execution",
         ),
         default="methodology",
@@ -97,6 +98,8 @@ def _notebook_payload(notebook: NotebookAnalyzer, args: argparse.Namespace) -> A
         return notebook.dependency_graph().to_dict()
     if args.report == "diagnostics":
         return notebook.diagnostics().to_dict()
+    if args.report == "imports":
+        return notebook.import_report().to_dict()
     if args.report == "execution":
         return notebook.execution_report().to_dict()
     if args.report == "ranking":
@@ -127,6 +130,8 @@ def _render_notebook(notebook: NotebookAnalyzer, args: argparse.Namespace) -> st
         return notebook.dependency_dot() if args.dot else notebook.render_dependency_graph()
     if args.report == "diagnostics":
         return notebook.render_diagnostics()
+    if args.report == "imports":
+        return notebook.render_import_report()
     if args.report == "execution":
         return notebook.render_execution_report()
     if args.report == "ranking":

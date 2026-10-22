@@ -15,6 +15,7 @@ from astscribe.impact import (
     rank_cells_by_impact,
     render_impact_ranking,
 )
+from astscribe.import_inventory import NotebookImportReport, build_import_report
 from astscribe.methodology import MethodologyReport, build_methodology_report
 from astscribe.parser import ImportTable, SymbolTable, parse_source
 from astscribe.pipeline import ExperimentPipeline, build_experiment_pipeline
@@ -210,6 +211,17 @@ class NotebookAnalyzer:
     def explain_notebook_cell(self, cell_index: int, style: str = "scientific") -> str:
         """Explain a cell using its original index in a loaded notebook."""
         return self.analyze_notebook_cell(cell_index).render(style)
+
+    def import_report(self) -> NotebookImportReport:
+        """Inventory static imports with original notebook cell/line evidence."""
+
+        cells = tuple(zip(self._cell_indices, self._cells, strict=True))
+        return build_import_report(cells)
+
+    def render_import_report(self) -> str:
+        """Render a source-only import inventory without querying installed packages."""
+
+        return self.import_report().render()
 
     def methodology(self) -> MethodologyReport:
         """Build a notebook-level, evidence-backed scientific Methods report."""
