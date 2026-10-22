@@ -39,6 +39,7 @@ def _parser() -> argparse.ArgumentParser:
             "impact",
             "cell",
             "ranking",
+            "execution",
         ),
         default="methodology",
         help="notebook report to render (default: methodology)",
@@ -96,6 +97,8 @@ def _notebook_payload(notebook: NotebookAnalyzer, args: argparse.Namespace) -> A
         return notebook.dependency_graph().to_dict()
     if args.report == "diagnostics":
         return notebook.diagnostics().to_dict()
+    if args.report == "execution":
+        return notebook.execution_report().to_dict()
     if args.report == "ranking":
         return {"items": [summary.to_dict() for summary in notebook.impact_ranking()]}
     if args.report == "cell":
@@ -124,6 +127,8 @@ def _render_notebook(notebook: NotebookAnalyzer, args: argparse.Namespace) -> st
         return notebook.dependency_dot() if args.dot else notebook.render_dependency_graph()
     if args.report == "diagnostics":
         return notebook.render_diagnostics()
+    if args.report == "execution":
+        return notebook.render_execution_report()
     if args.report == "ranking":
         return notebook.render_impact_ranking()
     if args.report == "cell":
