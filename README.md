@@ -249,7 +249,7 @@ The last command returns **1** when the unified audit identifies warning-level c
 
 From Python:
 
-```python
+```py
 from astscribe import NotebookAnalyzer
 
 notebook = NotebookAnalyzer.from_ipynb("experiment.ipynb")
