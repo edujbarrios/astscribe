@@ -7,6 +7,7 @@ from pathlib import Path
 from astscribe.api import _analyze_parsed
 from astscribe.dependency import NotebookDependencyGraph, build_dependency_graph
 from astscribe.diagnostics import NotebookDiagnostics, build_notebook_diagnostics
+from astscribe.execution import NotebookExecutionReport, audit_execution_counts
 from astscribe.impact import (
     CellImpactSummary,
     NotebookImpactReport,
@@ -45,6 +46,7 @@ class NotebookAnalyzer:
     _cell_indices: list[int] = field(default_factory=list)
     _results: list[AnalysisResult] = field(default_factory=list)
     _skipped_cells: list[SkippedCell] = field(default_factory=list)
+    _execution_counts: dict[int, int | None] = field(default_factory=dict)
     _next_cell_index: int = 0
     _graph_cache: NotebookDependencyGraph | None = field(default=None, repr=False)
 
@@ -105,6 +107,12 @@ class NotebookAnalyzer:
                 reason = "code cell is missing a source field"
             else:
                 reason = ""
+
+            if isinstance(cell, dict) and cell.get("cell_type") == "code":
+                count = cell.get("execution_count")
+                analyzer._execution_counts[notebook_index] = (
+                    count if type(count) is int and count > 0 else None
+                )
 
             if reason:
                 if not skip_invalid_python:
@@ -290,6 +298,16 @@ class NotebookAnalyzer:
         """Export the dependency graph as Graphviz DOT without requiring Graphviz."""
 
         return self.dependency_graph().to_dot()
+
+    def execution_report(self) -> NotebookExecutionReport:
+        """Audit saved execution counts, which are not verified kernel history."""
+
+        return audit_execution_counts(self._execution_counts)
+
+    def render_execution_report(self) -> str:
+        """Render a saved-metadata-only execution consistency report."""
+
+        return self.execution_report().render()
 
     def diagnostics(self) -> NotebookDiagnostics:
         """Build conservative notebook diagnostics from the dependency graph."""
