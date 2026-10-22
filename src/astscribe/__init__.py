@@ -6,6 +6,7 @@ from .dependency import (
     SymbolRedefinition,
 )
 from .diagnostics import NotebookDiagnostic, NotebookDiagnostics
+from .execution import ExecutionCell, ExecutionFinding, NotebookExecutionReport
 from .impact import CellImpactSummary, ImpactHop, ImpactPath, NotebookImpactReport
 from .methodology import MethodologyReport, MethodologySection
 from .notebook import NotebookAnalyzer, SkippedCell
@@ -21,6 +22,8 @@ __all__ = [
     "CellDependencyNode",
     "CellImpactSummary",
     "ExperimentPipeline",
+    "ExecutionCell",
+    "ExecutionFinding",
     "ImpactHop",
     "ImpactPath",
     "MethodologyReport",
@@ -29,6 +32,7 @@ __all__ = [
     "NotebookDependencyGraph",
     "NotebookDiagnostic",
     "NotebookDiagnostics",
+    "NotebookExecutionReport",
     "NotebookImpactReport",
     "PipelineStage",
     "SkippedCell",
