@@ -49,9 +49,10 @@ def test_notebook_import_inventory_is_deterministic_and_has_no_network_calls() -
     assert report.to_dict()["non_stdlib_roots"] == [
         "astscribe", "cv2", "requests", "sklearn", "yaml",
     ]
-    assert report.imports[0].distribution_hint == "scikit-learn"
-    assert report.imports[2].distribution_hint == "opencv-python"
-    assert report.imports[4].distribution_hint == "PyYAML"
+    hints = {item.root: item.distribution_hint for item in report.imports}
+    assert hints["sklearn"] == "scikit-learn"
+    assert hints["cv2"] == "opencv-python"
+    assert hints["yaml"] == "PyYAML"
     assert "not verified" in report.render()
 
 
@@ -93,4 +94,4 @@ def test_cli_imports_report_text_and_json(
     assert main([str(path), "--report", "imports"]) == 0
     result_text = capsys.readouterr().out  # type: ignore[attr-defined]
     assert "Cell 2" in result_text
-    assert "source" not in result_text.lower() or "static import statements" in result_text.lower()
+    assert "Static import statements" in result_text
