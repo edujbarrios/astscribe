@@ -8,7 +8,6 @@ from astscribe.api import _analyze_parsed
 from astscribe.dependency import NotebookDependencyGraph, build_dependency_graph
 from astscribe.diagnostics import NotebookDiagnostics, build_notebook_diagnostics
 from astscribe.execution import NotebookExecutionReport, audit_execution_counts
-from astscribe.import_inventory import NotebookImportReport, build_import_report
 from astscribe.impact import (
     CellImpactSummary,
     NotebookImpactReport,
@@ -16,6 +15,7 @@ from astscribe.impact import (
     rank_cells_by_impact,
     render_impact_ranking,
 )
+from astscribe.import_inventory import NotebookImportReport, build_import_report
 from astscribe.methodology import MethodologyReport, build_methodology_report
 from astscribe.parser import ImportTable, SymbolTable, parse_source
 from astscribe.pipeline import ExperimentPipeline, build_experiment_pipeline
