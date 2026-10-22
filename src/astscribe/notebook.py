@@ -8,6 +8,7 @@ from astscribe.api import _analyze_parsed
 from astscribe.dependency import NotebookDependencyGraph, build_dependency_graph
 from astscribe.diagnostics import NotebookDiagnostics, build_notebook_diagnostics
 from astscribe.execution import NotebookExecutionReport, audit_execution_counts
+from astscribe.import_inventory import NotebookImportReport, build_import_report
 from astscribe.impact import (
     CellImpactSummary,
     NotebookImpactReport,
@@ -210,6 +211,17 @@ class NotebookAnalyzer:
     def explain_notebook_cell(self, cell_index: int, style: str = "scientific") -> str:
         """Explain a cell using its original index in a loaded notebook."""
         return self.analyze_notebook_cell(cell_index).render(style)
+
+    def import_report(self) -> NotebookImportReport:
+        """Inventory static imports with original notebook cell/line evidence."""
+
+        cells = tuple(zip(self._cell_indices, self._cells, strict=True))
+        return build_import_report(cells)
+
+    def render_import_report(self) -> str:
+        """Render a source-only import inventory without querying installed packages."""
+
+        return self.import_report().render()
 
     def methodology(self) -> MethodologyReport:
         """Build a notebook-level, evidence-backed scientific Methods report."""
