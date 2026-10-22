@@ -226,6 +226,45 @@ Blast radius: 3
 
 **Why it matters:** ASTScribe follows static symbol dependencies, so it can estimate which cells need review without executing their code. This is a conservative impact estimate, not a Jupyter execution scheduler.
 
+## Audit notebook execution, imports, and CI readiness (new in 0.14.0)
+
+ASTScribe can now perform three complementary, **source-grounded** checks before attempting to reproduce an ML experiment. They require no GPU, API key, framework installation, or execution of the notebook itself.
+
+| Report | What it inspects | What it does **not** prove |
+| --- | --- | --- |
+| `execution` | Saved Jupyter execution counters, including duplicate or nonmonotonic counts, retaining original cell indices | Actual kernel history or trustworthy outputs |
+| `imports` | Python import statements, cell/line evidence, standard-library vs. possible local/external modules | Installed package names or exact versions |
+| `audit` | Dependency risks, skipped code cells, saved execution anomalies, and unverified non-stdlib import roots | Clean-kernel reproducibility or scientific correctness |
+
+Use the command line:
+
+```bash
+astscribe experiment.ipynb --report execution --json
+astscribe experiment.ipynb --report imports --json
+astscribe experiment.ipynb --report audit --json
+astscribe experiment.ipynb --report audit --json --fail-on-warning
+```
+
+The last command returns **1** when the unified audit identifies warning-level concerns (for example, unsupported notebook magics or unresolved symbols), and **0** otherwise. It still emits the structured report, making it suitable for a CI artifact and pull-request review. Without `--report audit`, `--fail-on-warning` continues to gate only on dependency diagnostics.
+
+From Python:
+
+```python
+from astscribe import NotebookAnalyzer
+
+notebook = NotebookAnalyzer.from_ipynb("experiment.ipynb")
+execution = notebook.execution_report().to_dict()
+imports = notebook.import_report().to_dict()
+audit = notebook.audit_report().to_dict()
+print("Audit warnings:", audit["warning_count"])
+```
+
+The new immutable data models preserve source coordinates so a reviewer can investigate each finding without running untrusted or expensive notebook cells. Unsupported notebook syntax is never interpreted as safe; the aggregated audit makes skipped code an explicit warning.
+
+**Interpretation boundary:** Notebook execution counts are editable persisted metadata, not a verified execution trace. Import paths may point to local modules and optional distribution-name hints are not installed-version checks. Even a zero-warning audit **does not certify reproducibility, convergence, model performance, or saved-output correctness**.
+
+Detailed documentation: [execution metadata](docs/execution_metadata.md) · [static import inventory](docs/import_inventory.md) · [CI audit](docs/notebook_ci_audit.md).
+
 ## Use it on your own notebook
 
 Pass your existing `.ipynb` file to the analyzer. Markdown and unsupported IPython
@@ -248,9 +287,11 @@ Performs PyTorch inference using evaluation-oriented execution semantics.
 ```
 
 For real notebook files, you can also run `astscribe experiment.ipynb --report pipeline`,
-`--report diagnostics --json`, or `--report dependencies --dot`.
-Use `--strict` to reject unsupported cells and `--fail-on-warning` to return
-a non-zero exit code when dependency warnings are detected.
+`--report diagnostics --json`, `--report dependencies --dot`,
+`--report imports --json`, `--report execution --json`, or `--report audit --json`.
+Use `--strict` to reject unsupported cells. `--fail-on-warning` gates on dependency
+warnings by default; with `--report audit` it additionally includes execution
+metadata inconsistencies and skipped-code warnings.
 
 ## Explain a cell without leaving Jupyter
 
