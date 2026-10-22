@@ -39,6 +39,7 @@ def _parser() -> argparse.ArgumentParser:
             "impact",
             "cell",
             "ranking",
+            "audit",
             "imports",
             "execution",
         ),
@@ -59,7 +60,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--fail-on-warning",
         action="store_true",
-        help="exit with status 1 if notebook dependency diagnostics contain warnings",
+        help="exit with status 1 if notebook dependency (or audit) warnings are found",
     )
     output_group = parser.add_mutually_exclusive_group()
     output_group.add_argument(
@@ -100,6 +101,8 @@ def _notebook_payload(notebook: NotebookAnalyzer, args: argparse.Namespace) -> A
         return notebook.diagnostics().to_dict()
     if args.report == "imports":
         return notebook.import_report().to_dict()
+    if args.report == "audit":
+        return notebook.audit_report().to_dict()
     if args.report == "execution":
         return notebook.execution_report().to_dict()
     if args.report == "ranking":
@@ -132,6 +135,8 @@ def _render_notebook(notebook: NotebookAnalyzer, args: argparse.Namespace) -> st
         return notebook.render_diagnostics()
     if args.report == "imports":
         return notebook.render_import_report()
+    if args.report == "audit":
+        return notebook.render_audit_report()
     if args.report == "execution":
         return notebook.render_execution_report()
     if args.report == "ranking":
@@ -168,10 +173,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 skip_invalid_python=not args.strict,
             )
             output = _render_notebook(notebook, args)
-            if args.fail_on_warning and any(
-                item.severity == "warning" for item in notebook.diagnostics().items
-            ):
-                exit_code = 1
+            if args.fail_on_warning:
+                warning_count = (
+                    notebook.audit_report().warning_count
+                    if args.report == "audit"
+                    else sum(item.severity == "warning" for item in notebook.diagnostics().items)
+                )
+                if warning_count:
+                    exit_code = 1
         else:
             source = sys.stdin.read() if str(args.path) == "-" else args.path.read_text(encoding="utf-8")
             if args.json:
