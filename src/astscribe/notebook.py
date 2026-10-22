@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from astscribe.api import _analyze_parsed
+from astscribe.audit import NotebookAuditReport, build_notebook_audit
 from astscribe.dependency import NotebookDependencyGraph, build_dependency_graph
 from astscribe.diagnostics import NotebookDiagnostics, build_notebook_diagnostics
 from astscribe.execution import NotebookExecutionReport, audit_execution_counts
@@ -222,6 +223,22 @@ class NotebookAnalyzer:
         """Render a source-only import inventory without querying installed packages."""
 
         return self.import_report().render()
+
+    def audit_report(self) -> NotebookAuditReport:
+        """Aggregate conservative, actionable static notebook CI findings."""
+
+        return build_notebook_audit(
+            analyzed_cells=self.cell_count,
+            skipped_cells=tuple((item.index, item.reason) for item in self.skipped_cells),
+            diagnostics=self.diagnostics(),
+            execution=self.execution_report(),
+            imports=self.import_report(),
+        )
+
+    def render_audit_report(self) -> str:
+        """Render the aggregate notebook static audit."""
+
+        return self.audit_report().render()
 
     def methodology(self) -> MethodologyReport:
         """Build a notebook-level, evidence-backed scientific Methods report."""
