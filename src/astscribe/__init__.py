@@ -16,7 +16,7 @@ from .pipeline import ExperimentPipeline, PipelineStage
 from .semantics import SemanticRegistry
 from .sir import AnalysisResult
 
-__version__ = "0.13.0"
+__version__ = "0.14.0"
 
 __all__ = [
     "AnalysisResult",

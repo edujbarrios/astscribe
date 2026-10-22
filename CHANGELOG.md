@@ -5,6 +5,21 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.14.0] - 2026-10-22
+
+### Added
+
+- **Saved execution metadata audit:** `NotebookAnalyzer.execution_report()` and `astscribe FILE.ipynb --report execution [--json]` detect duplicate or nonmonotonic Jupyter execution counters while preserving original notebook cell indices, even for syntax-skipped cells (#54).
+- **Static import inventory:** `NotebookAnalyzer.import_report()` and `--report imports [--json]` record source-backed Python import roots, original notebook cell/line locations, nested imports and explicit relative imports. Non-standard-library roots are not assumed to be installed distributions; optional package-name mappings remain unverified hints (#55).
+- **Unified notebook CI preflight:** `NotebookAnalyzer.audit_report()` and `--report audit [--json] [--fail-on-warning]` combine dependency findings, execution metadata inconsistencies, unsupported-cell uncertainty and import roots in a deterministic, source-located report. CI can reject audit warnings without executing the notebook (#56).
+- New public immutable report/evidence types, regression suites for each report and English reference documentation.
+
+### Compatibility and limits
+
+- The existing analysis and report APIs remain compatible. `--fail-on-warning` retains its previous dependency-only behavior for all reports except the new unified `audit` report.
+- Notebook execution counts are **saved metadata**, not verified kernel traces. Import inventories are **source-only**, not validated dependency lockfiles. A passing static audit **does not prove reproducibility, actual training execution, or output correctness**.
+- No new runtime dependencies, model downloads, code execution, or unsupported ML performance claims.
+
 ## [0.13.0] - 2026-10-21
 
 ### Fixed
