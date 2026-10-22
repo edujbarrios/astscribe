@@ -7,6 +7,7 @@ from .dependency import (
 )
 from .diagnostics import NotebookDiagnostic, NotebookDiagnostics
 from .impact import CellImpactSummary, ImpactHop, ImpactPath, NotebookImpactReport
+from .import_inventory import ImportEvidence, NotebookImportReport
 from .methodology import MethodologyReport, MethodologySection
 from .notebook import NotebookAnalyzer, SkippedCell
 from .pipeline import ExperimentPipeline, PipelineStage
@@ -23,6 +24,7 @@ __all__ = [
     "ExperimentPipeline",
     "ImpactHop",
     "ImpactPath",
+    "ImportEvidence",
     "MethodologyReport",
     "MethodologySection",
     "NotebookAnalyzer",
@@ -30,6 +32,7 @@ __all__ = [
     "NotebookDiagnostic",
     "NotebookDiagnostics",
     "NotebookImpactReport",
+    "NotebookImportReport",
     "PipelineStage",
     "SkippedCell",
     "SemanticRegistry",
