@@ -98,7 +98,6 @@ def test_cli_imports_report_text_and_json(
     assert "Static import statements" in result_text
 
 
-
 def test_match_case_imports_are_conditional_not_top_level() -> None:
     analyzer = NotebookAnalyzer.from_cells(
         [
