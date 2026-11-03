@@ -13,6 +13,24 @@ from typing import Any, Literal
 
 ImportKind = Literal["stdlib", "non_stdlib", "relative"]
 
+# Imports in these statement bodies are conditional or nested, not guaranteed to run.
+# ast.TryStar (except*) is only available on Python 3.11 and later.
+_NESTED_IMPORT_SCOPES: tuple[type[ast.AST], ...] = (
+    ast.If,
+    ast.For,
+    ast.AsyncFor,
+    ast.While,
+    ast.Try,
+    ast.With,
+    ast.AsyncWith,
+    ast.FunctionDef,
+    ast.AsyncFunctionDef,
+    ast.ClassDef,
+    ast.Lambda,
+    ast.Match,
+    getattr(ast, "TryStar", ast.Try),
+)
+
 # Hints only, not verified installation requirements or version constraints.
 _DISTRIBUTION_HINTS = {
     "PIL": "Pillow",
@@ -102,22 +120,7 @@ class _ImportCollector(ast.NodeVisitor):
         self._record(module, node.lineno)
 
     def generic_visit(self, node: ast.AST) -> None:
-        if isinstance(
-            node,
-            (
-                ast.If,
-                ast.For,
-                ast.AsyncFor,
-                ast.While,
-                ast.Try,
-                ast.With,
-                ast.AsyncWith,
-                ast.FunctionDef,
-                ast.AsyncFunctionDef,
-                ast.ClassDef,
-                ast.Lambda,
-            ),
-        ):
+        if isinstance(node, _NESTED_IMPORT_SCOPES):
             self.depth += 1
             super().generic_visit(node)
             self.depth -= 1

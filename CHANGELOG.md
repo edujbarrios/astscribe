@@ -5,6 +5,17 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.14.1] - 2026-11-03
+
+### Fixed
+
+- Treat imports in Python `match`/`case` statements (3.10+) and `try`/`except*` statements (3.11+) as nested/conditional in the source-only notebook import inventory, rather than incorrectly reporting them as unconditional.
+- Add regression coverage for both syntaxes across the supported Python matrix; preserve original cell/line evidence, the v1 report schema, and the existing Python 3.10 minimum.
+
+### Compatibility
+
+- No new runtime dependencies, API changes, dynamic imports, or execution of notebook code. The update only corrects `inside_scope` evidence for these control-flow constructs.
+
 ## [0.14.0] - 2026-10-22
 
 ### Added

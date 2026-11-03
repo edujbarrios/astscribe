@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 
@@ -95,3 +96,43 @@ def test_cli_imports_report_text_and_json(
     result_text = capsys.readouterr().out  # type: ignore[attr-defined]
     assert "Cell 2" in result_text
     assert "Static import statements" in result_text
+
+
+
+def test_match_case_imports_are_conditional_not_top_level() -> None:
+    analyzer = NotebookAnalyzer.from_cells(
+        [
+            "match backend:\n"
+            "    case 'torch':\n"
+            "        import torch\n"
+            "    case _:\n"
+            "        from sklearn import datasets\n"
+            "import os\n"
+        ]
+    )
+    imports = analyzer.import_report().imports
+    assert [(item.module, item.line, item.inside_scope) for item in imports] == [
+        ("torch", 3, True),
+        ("sklearn", 5, True),
+        ("os", 6, False),
+    ]
+
+
+def test_except_star_imports_are_conditional_on_python_311_plus() -> None:
+    if not hasattr(ast, "TryStar"):
+        return  # except* syntax is not available in Python 3.10.
+    analyzer = NotebookAnalyzer.from_cells(
+        [
+            "try:\n"
+            "    import os\n"
+            "except* ImportError:\n"
+            "    import torch\n"
+            "import sys\n"
+        ]
+    )
+    imports = analyzer.import_report().imports
+    assert [(item.module, item.line, item.inside_scope) for item in imports] == [
+        ("os", 2, True),
+        ("torch", 4, True),
+        ("sys", 5, False),
+    ]
