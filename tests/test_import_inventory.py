@@ -135,3 +135,44 @@ def test_except_star_imports_are_conditional_on_python_311_plus() -> None:
         ("torch", 4, True),
         ("sys", 5, False),
     ]
+
+
+def test_unreachable_literal_branches_do_not_create_import_dependencies() -> None:
+    analyzer = NotebookAnalyzer.from_cells([
+        "if False:\n"
+        "    import ghost_if\n"
+        "else:\n"
+        "    import actual_else\n"
+        "if True:\n"
+        "    from torch import nn\n"
+        "else:\n"
+        "    import ghost_else\n"
+        "while False:\n"
+        "    import ghost_loop\n"
+        "else:\n"
+        "    import actual_while_else\n"
+    ])
+    imports = analyzer.import_report().imports
+    assert [(item.module, item.line, item.inside_scope) for item in imports] == [
+        ("actual_else", 4, True),
+        ("torch", 6, True),
+        ("actual_while_else", 12, True),
+    ]
+    assert analyzer.import_report().to_dict()["non_stdlib_roots"] == [
+        "actual_else", "actual_while_else", "torch",
+    ]
+
+
+def test_unknown_control_flow_preserves_both_possible_imports() -> None:
+    analyzer = NotebookAnalyzer.from_cells([
+        "if use_gpu:\n"
+        "    import torch\n"
+        "else:\n"
+        "    import numpy\n"
+        "while should_retry:\n"
+        "    import retrying\n"
+    ])
+    imports = analyzer.import_report().imports
+    assert [(item.module, item.inside_scope) for item in imports] == [
+        ("torch", True), ("numpy", True), ("retrying", True),
+    ]

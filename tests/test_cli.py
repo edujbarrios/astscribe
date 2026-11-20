@@ -323,3 +323,21 @@ def test_cli_overview_json_includes_original_indices_and_skipped_cells(
     assert "methodology" in data
     assert "pipeline" in data
     assert "diagnostics" in data
+
+
+def test_cli_accepts_python_source_with_utf8_bom(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "bom.py"
+    path.write_bytes(b"\xef\xbb\xbfmodel.eval()\n")
+    assert main([str(path), "--style", "concise"]) == 0
+    assert "evaluation mode" in capsys.readouterr().out
+
+
+def test_cli_honors_pep263_source_encoding(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "latin1.py"
+    path.write_bytes("# coding: latin-1\n# caf\xe9\nmodel.eval()\n".encode("latin-1"))
+    assert main([str(path), "--style", "concise"]) == 0
+    assert "evaluation mode" in capsys.readouterr().out

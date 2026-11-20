@@ -22,3 +22,12 @@ Distribution names are **hints**, not verified project requirements: `sklearn` â
 Skipped/unsupported notebook code cells do not contribute import claims. Nested/conditional imports are visible but should not be interpreted as unconditional dependencies. This source-only report is a useful starting point for reproducibility reviewâ€”not an automatically validated lockfile.
 
 Control-flow boundaries include Python `match`/`case` blocks (Python 3.10+) and `try`/`except*` blocks (Python 3.11+). Imports appearing inside those statements are marked `inside_scope: true`, just as imports under `if` or ordinary `try` statements are. This is a conservative syntactic annotation, not a prediction that the branch actually executes.
+
+
+Literal boolean branches are handled without executing the notebook: imports under
+`if False` (or the inactive side of `if True`) and `while False` bodies are
+omitted because they cannot execute. A `while False` `else` branch is retained.
+Imports in reachable, syntactically nested branches still set
+`inside_scope: true`, preserving source provenance. Nonliteral conditions and
+their alternative branches remain conservatively included; this does not attempt
+to evaluate variables or runtime state.
