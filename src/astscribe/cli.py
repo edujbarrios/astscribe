@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tokenize
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -182,7 +183,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if warning_count:
                     exit_code = 1
         else:
-            source = sys.stdin.read() if str(args.path) == "-" else args.path.read_text(encoding="utf-8")
+            if str(args.path) == "-":
+                source = sys.stdin.read()
+            else:
+                # Honor PEP 263 coding cookies and the optional UTF-8 BOM.
+                with tokenize.open(args.path) as handle:
+                    source = handle.read()
             if args.json:
                 output = json.dumps(analyze(source).to_dict(), indent=2, sort_keys=True)
             else:

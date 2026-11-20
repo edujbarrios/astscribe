@@ -5,6 +5,18 @@ All notable changes to ASTScribe will be documented in this file.
 Versions 0.1.0 through 0.7.0 were internal development milestones and were not
 published to PyPI.
 
+## [0.14.2] - 2026-11-20
+
+### Fixed
+
+- Exclude provably unreachable literal `if False`, inactive `else`, and `while False` imports from the notebook's source-only import inventory, while retaining original source lines and nested/conditional provenance for reachable imports. Unknown conditions remain conservative.
+- Read Python files in the CLI with Python's standard encoding detection (PEP 263 coding cookies and UTF-8 BOM), instead of assuming every source file is plain UTF-8.
+
+### Release safety
+
+- Block PyPI tagging and publication until the release workflow's Python 3.10–3.14 regression suite, Ruff and strict mypy checks succeed. The existing wheel build and smoke test remain required.
+- Add regressions for dead/unknown import branches, non-UTF-8 declared source encoding, and BOM-prefixed Python source. No new runtime dependencies or public API changes.
+
 ## [0.14.1] - 2026-11-03
 
 ### Fixed

@@ -111,6 +111,30 @@ class _ImportCollector(ast.NodeVisitor):
             )
         )
 
+    def _visit_nested_statements(self, statements: list[ast.stmt]) -> None:
+        """Visit syntactically nested code while retaining its source location."""
+        self.depth += 1
+        try:
+            for statement in statements:
+                self.visit(statement)
+        finally:
+            self.depth -= 1
+
+    def visit_If(self, node: ast.If) -> None:
+        # Literal boolean branches are decidable without running any code.
+        # Retain nested provenance for the reachable imports.
+        if isinstance(node.test, ast.Constant) and type(node.test.value) is bool:
+            self._visit_nested_statements(node.body if node.test.value else node.orelse)
+        else:
+            self.generic_visit(node)
+
+    def visit_While(self, node: ast.While) -> None:
+        if isinstance(node.test, ast.Constant) and node.test.value is False:
+            # The else branch still runs when the initial condition is false.
+            self._visit_nested_statements(node.orelse)
+        else:
+            self.generic_visit(node)
+
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
             self._record(alias.name, node.lineno)
